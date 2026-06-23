@@ -2,7 +2,24 @@
 
 A static site. No build step, no framework, no dependencies, no server, no AI at runtime. It runs
 entirely in the browser and is hosted on GitHub Pages. Everything the engine knows lives in
-`data/*.json`; the engine itself is ~300 lines of pure functions.
+`data/*.json`; the engine itself is ~400 lines of pure functions.
+
+> **The live flow is the positive-first checklist (v2).** The UI (`src/ui.js`) drives:
+> paste → `suggestFamily()` scans for keyword cues and suggests a family (user overrides freely) →
+> the user picks a family (or "Nothing — it seems sound") → a checklist of that family's **virtues**
+> (what a sound argument does), each marked ✓ it does this / ✗ it falls short / skip →
+> `scoreChecklist()` feeds the Bayesian engine and returns a tentative+teaching verdict.
+>
+> The sequential, Akinator-style interview (`status()`/`pickNextQuestion()`/`answer()`) is still in
+> the engine and still tested, but the UI no longer uses it. It struggled to surface thin fallacies
+> (~6/13 reliably); the checklist catches 13/13 on two denied virtues because the user routes and all
+> evidence enters at once. See `tests/checklist.test.js` for the live contract.
+>
+> **Positive validation is the goodwill thesis realized:** marking a virtue ✓ is evidence FOR the
+> argument (the engine answers that question "no"); marking it ✗ is evidence for the fallacy ("yes");
+> skipping is no signal. The user confirms soundness like a fair juror and can actively defend an
+> argument — guilt only emerges where a virtue is marked absent. `data/families.json` holds the
+> family metadata, routing cues, and per-fallacy virtue "tells" (each mapped to a question id).
 
 ## File map
 
