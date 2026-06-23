@@ -96,6 +96,14 @@
       "short": "Treating \"lots of people believe or do it\" as the reason a claim is true or right.",
       "teaching": "A bandwagon appeal points to how many people accept or do something as if that alone settles whether it's true or right. Popularity can occasionally be a faint clue, but it becomes a fallacy when a head-count stands in for actual reasons or evidence.",
       "confirm_check": "Is the popularity itself (how many believe or do it) being offered as the reason the claim is true or right, rather than as one clue alongside independent reasons?"
+    },
+    {
+      "id": "argument_from_incredulity",
+      "name": "Argument from Incredulity",
+      "base_rate": 1,
+      "short": "Concluding a claim is false because one personally can't imagine how it could be true.",
+      "teaching": "An argument from incredulity treats \"I can't see how this could be true\" as if it settled that it isn't. But the limit being reached is the speaker's own knowledge or imagination, not the claim's plausibility. It is reasonable to ask for an explanation; this only goes wrong when not understanding how is taken as proof of not so.",
+      "confirm_check": "Is the claim being rejected because no one could show it's true, or just because the speaker personally can't see or imagine how it could be?"
     }
   ]
 }

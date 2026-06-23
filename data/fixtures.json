@@ -308,6 +308,40 @@
         "q_popularity_is_the_reason": "unsure"
       },
       "default": "unsure"
+    },
+    {
+      "id": "fall_argument_from_incredulity",
+      "label": "argument_from_incredulity",
+      "argument": "I simply cannot imagine how P could possibly be true. I've turned it over in my head and it makes no sense to me at all. Therefore P must be false.",
+      "answers": {
+        "q_rejected_for_unimaginable": "yes",
+        "q_cant_see_how_means_false": "yes",
+        "q_limit_is_speaker_not_claim": "yes",
+        "q_no_inquiry_before_dismissing": "yes",
+        "q_evidence_or_assertion": "yes",
+        "q_conclusion_matches_support": "yes",
+        "q_responds_to_claim_or_person": "no",
+        "q_options_framed_fairly": "no",
+        "q_who_said_it_or_why": "no",
+        "q_claim_addressed_or_left_standing": "unsure"
+      },
+      "default": "unsure"
+    },
+    {
+      "id": "valid_no_mechanism_after_inquiry",
+      "label": "VALID",
+      "argument": "Researchers have spent decades looking for any way this treatment could work — running controlled trials and searching for a plausible mechanism — and found no effect beyond placebo and no pathway by which it could act. Given that sustained, careful investigation, it is reasonable to conclude it probably does not work.",
+      "answers": {
+        "q_rejected_for_unimaginable": "no",
+        "q_cant_see_how_means_false": "no",
+        "q_limit_is_speaker_not_claim": "no",
+        "q_no_inquiry_before_dismissing": "no",
+        "q_evidence_or_assertion": "no",
+        "q_conclusion_matches_support": "no",
+        "q_cause_beyond_timing": "no",
+        "q_alternatives_ruled_out": "no"
+      },
+      "default": "no"
     }
   ]
 }

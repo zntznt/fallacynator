@@ -13,24 +13,26 @@
     },
     {
       "id": "q_evidence_or_assertion",
-      "text": "Does the conclusion rest mainly on something other than reasons (a feeling, a name, a head-count, or a label like 'natural'), or is there evidence and reasoning you could examine?",
+      "text": "Does the conclusion rest mainly on something other than reasons (a feeling, a name, a head-count, a label like 'natural', or 'I can't see how it could be so'), or is there evidence and reasoning you could examine?",
       "tags": ["entry"],
       "lr": {
         "appeal_to_emotion": { "yes": 2.6, "no": 0.45 },
         "appeal_to_authority": { "yes": 2.6, "no": 0.45 },
         "bandwagon": { "yes": 2.4, "no": 0.5 },
         "appeal_to_nature": { "yes": 2.6, "no": 0.45 },
+        "argument_from_incredulity": { "yes": 2.6, "no": 0.45 },
         "VALID": { "yes": 0.55, "no": 1.5 }
       }
     },
     {
       "id": "q_conclusion_matches_support",
-      "text": "Does the support point somewhere other than the conclusion (restating the claim, citing timing alone, or making a sweeping leap), or does it actually bear on it?",
+      "text": "Does the support point somewhere other than the conclusion (restating the claim, citing timing alone, making a sweeping leap, or resting on what the speaker can't picture), or does it actually bear on it?",
       "tags": ["entry"],
       "lr": {
         "circular_reasoning": { "yes": 2.6, "no": 0.45 },
         "false_cause": { "yes": 2.6, "no": 0.45 },
         "hasty_generalization": { "yes": 2.2, "no": 0.5 },
+        "argument_from_incredulity": { "yes": 2.2, "no": 0.5 },
         "VALID": { "yes": 0.55, "no": 1.5 }
       }
     },
@@ -332,6 +334,42 @@
       "tags": [],
       "lr": {
         "appeal_to_nature": { "yes": 4.5, "no": 0.3 },
+        "VALID": { "yes": 0.6, "no": 1.4 }
+      }
+    },
+    {
+      "id": "q_rejected_for_unimaginable",
+      "text": "Is the claim rejected because the speaker can't picture or understand how it could be true, or because of evidence that it isn't?",
+      "tags": ["entry"],
+      "lr": {
+        "argument_from_incredulity": { "yes": 4.5, "no": 0.3 },
+        "VALID": { "yes": 0.6, "no": 1.4 }
+      }
+    },
+    {
+      "id": "q_cant_see_how_means_false",
+      "text": "Is 'I don't see how it could be so' being treated as showing it's false, or is an actual reason against the claim given?",
+      "tags": ["entry"],
+      "lr": {
+        "argument_from_incredulity": { "yes": 4.5, "no": 0.3 },
+        "VALID": { "yes": 0.6, "no": 1.4 }
+      }
+    },
+    {
+      "id": "q_limit_is_speaker_not_claim",
+      "text": "Does the doubt point to a gap in the speaker's own knowledge or imagination, or to something genuinely implausible about the claim itself?",
+      "tags": [],
+      "lr": {
+        "argument_from_incredulity": { "yes": 4, "no": 0.35 },
+        "VALID": { "yes": 0.6, "no": 1.4 }
+      }
+    },
+    {
+      "id": "q_no_inquiry_before_dismissing",
+      "text": "Is the claim dismissed without looking into whether anyone could explain it, or only after a real attempt to check was made?",
+      "tags": [],
+      "lr": {
+        "argument_from_incredulity": { "yes": 4, "no": 0.35 },
         "VALID": { "yes": 0.6, "no": 1.4 }
       }
     }
