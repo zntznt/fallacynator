@@ -1,14 +1,15 @@
-// Coverage test — the scale safety net. Run: node tests/coverage.test.js
+// Coverage test — LEGACY (sequential interview flow). Run: node tests/coverage.test.js
 //
-// The calibration test only checks fallacies that have a hand-written fixture, so a fallacy added
-// without one (or one that quietly became unreachable) passes green while being dead on arrival.
-// This test checks EVERY fallacy in the catalog automatically: it synthesizes the honest answer
-// path a careful reader would give to a textbook instance of that fallacy (incriminate that
-// fallacy's questions, exonerate everything else), runs it through real question-selection across
-// several seeds, and asserts the fallacy actually gets caught often enough.
+// ⚠ This guards the *sequential* interview engine (status/pickNextQuestion), which the UI NO LONGER
+// USES. The live flow is the positive-first checklist — its catch authority is tests/checklist.test.js,
+// and THAT is what new fallacies must satisfy. This file is scoped to LEGACY_SET (the fallacies that
+// existed while the sequential flow was live) so it still catches regressions in the old engine
+// without gating new fallacies on a flow that structurally can't surface them (the very weakness the
+// checklist reformulation fixed). When adding a fallacy: satisfy checklist.test.js; you do NOT need
+// to touch this file or LEGACY_SET.
 //
-// This is what makes "routinely add 100+ fallacies" safe: a new fallacy that can't be reached or
-// can't clear the gate turns the build RED instead of silently never firing.
+// It synthesizes a textbook answer path for each legacy fallacy from its weights and asserts the
+// sequential engine still catches it well enough — a guard against accidentally breaking the old flow.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -43,10 +44,16 @@ const KNOWN_WEAK = new Set([
   'strawman', 'false_dilemma', 'slippery_slope', 'false_cause', 'appeal_to_nature', 'bandwagon',
 ]);
 
-// Honest answer path for a textbook instance of `target`: a question that points at `target`
-// (its yes-weight > 1) is answered "yes"; every other question is answered "no" (the argument is
-// ONLY this fallacy — clean on every other dimension). This is exactly how a fair reader of a
-// clear example would answer, and it's derived from the weights so it needs no hand-written fixture.
+// LEGACY_SET: the fallacies that existed while the sequential interview was the live flow. This test
+// is scoped to these — it guards the old engine against regression but does NOT gate fallacies added
+// after the checklist reformulation (those are the checklist's job; see tests/checklist.test.js).
+// Do not add new fallacies here. If you intentionally retire/rename a legacy fallacy, update this.
+const LEGACY_SET = new Set([
+  'ad_hominem', 'strawman', 'false_dilemma', 'slippery_slope', 'appeal_to_authority',
+  'hasty_generalization', 'circular_reasoning', 'appeal_to_emotion', 'false_cause', 'tu_quoque',
+  'appeal_to_nature', 'bandwagon', 'argument_from_incredulity',
+]);
+const legacyFallacies = fallaciesJSON.fallacies.filter((f) => LEGACY_SET.has(f.id));
 
 // Honest answer path for a textbook instance of `target`: a question that points at `target`
 // (its yes-weight > 1) is answered "yes"; every other question is answered "no" (the argument is
@@ -83,9 +90,9 @@ const ok = (m) => { passed++; console.log(`  ✓ ${m}`); };
 const failures = [];
 
 // ---- TIER 1 (HARD): structural reachability. A malformed addition fails the build. ----
-// Every fallacy must have enough entry-pool and dedicated questions to be *capable* of catching.
-// This is the part that protects routine additions: forget to wire a new fallacy in and it's red.
-for (const f of fallaciesJSON.fallacies) {
+// Every LEGACY fallacy must have enough entry-pool and dedicated questions to be *capable* of
+// catching in the sequential flow. New (post-checklist) fallacies are exempt — see header.
+for (const f of legacyFallacies) {
   const entryQs = QUESTIONS.filter((q) => (q.tags || []).includes('entry') && (f.id in q.lr)).length;
   const dedicated = QUESTIONS.filter((q) => f.id in q.lr && q.lr[f.id].yes > 1).length;
   if (entryQs < ENTRY_MIN) {
@@ -98,10 +105,10 @@ for (const f of fallaciesJSON.fallacies) {
 
 // ---- TIER 2 (SOFT→HARD on regression): behavioral catch. Reports every fallacy; fails on a
 // NEW weak fallacy, a REGRESSION, or an aggregate drop. The known-weak set is grandfathered. ----
-console.log(`Per-fallacy catch (honest textbook path, ${SEEDS.length} seeds):`);
+console.log(`Per-fallacy catch — LEGACY set (honest textbook path, ${SEEDS.length} seeds):`);
 const rows = [];
 let total = 0;
-for (const f of fallaciesJSON.fallacies) {
+for (const f of legacyFallacies) {
   const c = catchCount(f.id);
   const rate = c / SEEDS.length;
   total += rate;
@@ -117,7 +124,7 @@ for (const f of fallaciesJSON.fallacies) {
 }
 console.log(rows.join('\n'));
 
-const meanRate = total / fallaciesJSON.fallacies.length;
+const meanRate = total / legacyFallacies.length;
 console.log(`\nMean catch rate: ${(meanRate * 100).toFixed(0)}% (aggregate floor ${AGGREGATE_FLOOR * 100}%)`);
 if (meanRate < AGGREGATE_FLOOR) {
   failures.push(`AGGREGATE: mean catch ${(meanRate * 100).toFixed(0)}% < floor ${AGGREGATE_FLOOR * 100}% — the catalog as a whole got too weak`);

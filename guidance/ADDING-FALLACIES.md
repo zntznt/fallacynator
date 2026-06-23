@@ -1,19 +1,27 @@
-# Adding a fallacy (or a question)
+# Adding a fallacy
 
-**You do not touch any code.** Fallacynator's engine reads everything from `data/`. Adding a
-fallacy is append-only JSON. The engine validates your edits at load and the tests will fail
-loudly if you break a goodwill guardrail — that's the safety net, lean on it.
+**You do not touch any code.** Fallacynator reads everything from `data/*.json`. Adding a fallacy
+is append-only JSON across **four files**. The engine validates your edits at load, and four test
+suites fail loudly if you break a goodwill guarantee or leave the fallacy unreachable — that's the
+safety net, lean on it.
 
-Read [DESIGN-PRINCIPLES.md](DESIGN-PRINCIPLES.md) first if you haven't. The one rule that
-matters: **this app gives arguments the benefit of the doubt.** Every question must be able to
-vote *for* the argument being sound, not only against it. A question that can only incriminate
-will refuse to load.
+Read [DESIGN-PRINCIPLES.md](DESIGN-PRINCIPLES.md) first if you haven't. The one rule that matters:
+**this app gives arguments the benefit of the doubt.** The live UI is a *positive-first checklist*
+— the user confirms the virtues a sound argument has and only suspects a fallacy where a virtue is
+genuinely missing. Your job is to describe those virtues clearly and wire them up.
+
+> **The live flow is the checklist** (`src/ui.js` → `scoreChecklist`). A user pastes an argument,
+> is routed to a *family*, and ticks which virtues the argument has (✓) or lacks (✗). There is also
+> a sequential "interview" engine still in the codebase and still tested — steps marked
+> **[sequential]** below serve it. You can skip those and the checklist will still work, but the
+> sequential `coverage.test.js` will stay as-is; do the **[checklist]** steps and your fallacy is
+> live.
 
 ---
 
-## The 4 steps
+## The recipe (4 files)
 
-### 1. Add the fallacy to `data/fallacies.json`
+### 1. `data/fallacies.json` — define the fallacy
 
 Append one object to the `fallacies` array:
 
@@ -22,6 +30,7 @@ Append one object to the `fallacies` array:
   "id": "red_herring",
   "name": "Red Herring",
   "base_rate": 1.0,
+  "family": "against_the_person",
   "short": "Diverting attention to an unrelated point instead of addressing the issue.",
   "teaching": "A red herring changes the subject to something that feels relevant but isn't, leaving the original point unanswered. Bringing in genuinely related context is fine — it's only a red herring when the detour replaces the response rather than supporting it.",
   "confirm_check": "Does the response shift to a different issue and leave the original point unanswered, rather than genuinely bearing on it?"
@@ -32,21 +41,23 @@ Append one object to the `fallacies` array:
 |---|---|
 | `id` | lowercase `^[a-z][a-z0-9_]*$`, unique, never `"VALID"` |
 | `name` | display name |
-| `base_rate` | how common it is (1.0 typical; ~1.5 very common; ~0.8 rarer). Keep it modest — see the cap note below. |
+| `base_rate` | how common (1.0 typical; ~1.5 very common; ~0.8 rarer). Keep modest — see cap note. |
+| `family` | **required for the checklist.** One of the existing families (see `data/families.json`), or a new one (then add its metadata in step 3). Families keep sessions short and every fallacy reachable. |
 | `short` | ≤ 120 chars, one plain line |
 | `teaching` | 1–3 plain sentences. **Always say when it is *not* a fallacy** (the charitable caveat). No jargon. |
-| `confirm_check` | the yes-confirms question the *user* answers at the end. Required. |
+| `confirm_check` | the yes-confirms question the *user* answers at the verdict. Required. |
 
-> **base_rate cap:** with the strong validity prior, every fallacy's starting probability must
-> stay ≤ 0.15. With a dozen-ish fallacies near `base_rate: 1.0` you're nowhere near it. If you
-> add many fallacies with high base_rates the loader will reject the bank (guardrail G7) — lower
-> them.
+> **base_rate cap:** every fallacy's starting probability must stay ≤ 0.15. With a dozen-ish
+> fallacies near `base_rate: 1.0` you're nowhere near it; the loader rejects the bank (guardrail G7)
+> if you push one too high.
 
-### 2. Add at least **two** questions to `data/questions.json` that detect it
+### 2. `data/questions.json` — add ≥2 questions it **solely owns**
 
-Why two: the engine refuses to accuse on a single answer (it would beat the validity prior on
-flimsy evidence). It takes ~two consistent incriminating answers to even *tentatively* suspect a
-fallacy, so every fallacy needs ≥ 2 questions pointing at it.
+A fallacy needs at least two questions that point at it — and for the checklist, those questions must
+be **distinctive**: this fallacy's `yes` weight must be the *strictly highest* among the fallacies
+that question lists. A question shared equally across siblings can't single your fallacy out, so it
+can't be a checklist tell. `tests/checklist.test.js` enforces "≥2 distinctive questions" and that
+denying any distinctive pair accuses *your* fallacy and never a sibling.
 
 ```json
 {
@@ -60,110 +71,144 @@ fallacy, so every fallacy needs ≥ 2 questions pointing at it.
 }
 ```
 
-**The `lr` table is the whole game.** It says how strongly each answer points at each hypothesis.
-You only write `yes` and `no` weights (multiplicative, centered on 1.0). The engine derives the
-charitable `maybe`/`unsure` behavior for you — never hand-write those.
-
-The reliable pattern for "a question that detects fallacy F":
+**The `lr` table is the whole game.** You write only `yes`/`no` weights (multiplicative, centered on
+1.0); the engine derives the charitable `maybe`/`unsure` behavior — never hand-write those. **Use
+this exact recipe on your two distinctive questions** — it's the weight that reliably clears the
+checklist gate (weaker `no` values fall a hair short; a real fallacy once missed by 0.01 because one
+question used `no: 0.35`):
 
 ```json
-"F":     { "yes": 4.5, "no": 0.3 },   // the incriminating reading points hard at F
-"VALID": { "yes": 0.6, "no": 1.4 }    // ...and that same reading costs VALID a little,
-                                       //    while the exonerating reading rewards VALID
+"F":     { "yes": 4.5, "no": 0.3 },   // BOTH distinctive questions — yes:4.5, no:0.3
+"VALID": { "yes": 0.6, "no": 1.4 }    // costs VALID a little; the exonerating reading rewards it
 ```
 
-- Incriminating weight (the bad reading) on F: `yes` between **2 and 6**. Stronger = more
-  diagnostic. (Anything above 3 is clamped to 3 internally — authoring 4.5 just means "as strong
-  as it gets.")
-- Exonerating weight on F: `no` between **0.3 and 0.7**.
-- `VALID` row: incriminating side `yes` ≤ 1.0 (usually ~0.6), exonerating side `no` ≥ 1.0
-  (usually ~1.4). This is what lets the argument earn innocence.
+- Incriminating `yes` on F: **4.5** for distinctive questions (clamped to 3 internally; 4.5 = "as
+  strong as it gets"). A 3rd/4th question may be softer (`yes: 4, no: 0.35`).
+- Exonerating `no` on F: **0.3** for your two distinctive questions; ≤ 0.4 elsewhere.
+- `VALID` row: incriminating side `yes` ≤ 1.0 (~0.6), exonerating side `no` ≥ 1.0 (~1.4). This is
+  what lets the argument earn innocence — **required by guardrails G1/G2 or the bank won't load.**
 
-A question can point at **several related fallacies** — list them all in `lr` (see
-`q_conclusion_matches_support`, which informs circular_reasoning, false_cause, and
-hasty_generalization at once). That gives the question-picker more to work with.
+A question *may* list several related fallacies, but for it to count as **distinctive** for yours,
+yours must be the strict top weight. The simplest path: give your fallacy 2–4 questions that only it
+lists. (A broad shared question is fine *in addition* — it helps family routing — but doesn't count
+toward your ≥2 distinctive.)
 
-### 2b. Give the fallacy **≥ 2 entry-pool questions** — this is the one that bites
+> **Watch family crowding.** Adding a fallacy to a family that already has 3+ members makes its
+> checklist a bit harder to clear (more siblings to out-rank). If your distinctive pair lands just
+> under the gate (`checklist.test.js` says "no distinctive pair accused it"), strengthen to the exact
+> recipe above, or give the fallacy a 3rd distinctive question.
 
-This is the rule learned the hard way, and `tests/coverage.test.js` enforces it. **A fallacy that
-isn't in at least two `["entry"]`-tagged questions will validate, load, and pass the calibration
-test — and then never actually get caught.** Here's why:
+> **Also tag ≥2 of its questions `["entry"]`.** `coverage.test.js` (the sequential flow) requires
+> every fallacy to have ≥2 entry-pool questions or it fails with "ENTRY: X has only N…". Simplest:
+> add `"tags": ["entry"]` to two of your distinctive questions. (Harmless to the checklist; required
+> by the still-running sequential test.)
 
-The engine picks each question by information gain. Broad questions (touching many fallacies) always
-out-score narrow ones, so a fallacy whose *only* foothold is a narrow question never gets asked
-early enough to rise above the validity prior — it's uncatchable no matter how guilty the argument.
-Every fallacy that catches reliably (ad_hominem, tu_quoque, argument_from_incredulity) has **two or
-more entry-pool presences**; every one that didn't, had one.
+### 3. `data/families.json` — write the checklist tells **[checklist — the step that's easy to forget]**
 
-Two honest ways to get a second entry presence:
-1. **Add the fallacy to an existing broad entry question** where a "yes" genuinely indicates it.
-   (e.g. `argument_from_incredulity` was added to `q_evidence_or_assertion` — "rests on something
-   other than reasons" honestly covers "I can't imagine how".) Best when a real fit exists.
-2. **Tag one of the fallacy's own dedicated questions `["entry"]`.** Always honest (a dedicated
-   question is a fair probe by definition) and the simplest lever. Use this freely.
+This is the file the sequential-era guide didn't have, and the one the tests will yell about if you
+skip it (`"fallacy red_herring needs ≥2 authored tells in families.json"`). Two parts:
 
-Keep the entry pool from ballooning (≤ ~16 entry questions) so the opening phase stays focused.
+**(a) The tells** — under `"tells"`, add ≥2 *virtues* for your fallacy, each mapping to one of its
+distinctive question ids from step 2. **Phrase each as what a SOUND argument does** (positive), so
+ticking ✓ is the charitable reading and ✗ (missing) is what hints at the fallacy:
 
-> **Note for large catalogs (~40+ fallacies):** the entry-pool approach has a ceiling — see
-> [ARCHITECTURE.md](ARCHITECTURE.md) "Scaling to a large catalog". At that size, switch to
-> family-based routing. Below it, ≥2 entry questions per fallacy is enough.
+```json
+"tells": {
+  "red_herring": [
+    { "qid": "q_detour_or_response", "text": "Addresses the point raised rather than changing the subject" },
+    { "qid": "q_subject_changed",    "text": "Stays on the original issue instead of pivoting to a side topic" }
+  ]
+}
+```
 
-### 3. Add a calibration fixture to `data/fixtures.json`
+- `qid` **must** be a question whose `lr` lists your fallacy with `yes > 1` (i.e. a real detector),
+  and should be one of its *distinctive* ones (step 2). The test checks this.
+- `text`: a positive virtue, plain and observable, ≤ ~90 chars. Not a flaw, not an accusation —
+  "Engages the claim itself" ✓, not "Attacks the person" ✗.
 
-Add **one fallacious example** (clearly committing your new fallacy, with the honest answer path
-a careful reader would give) and ideally **one sound near-miss** (an argument that superficially
-resembles it but is actually fine — e.g. a *relevant* aside that isn't a red herring). This is
-how you prove the new fallacy gets caught *and* doesn't cause false accusations.
+**(b) The family** — if you reused an existing `family` in step 1, you're done. If you created a new
+one, add it under `"families"` with a display name, the user-facing "what feels off?" prompt, and
+≥3 routing cues (lowercase substrings the text scanner looks for in a pasted argument):
+
+```json
+{
+  "id": "diversion",
+  "name": "Changes the subject",
+  "prompt": "It seems to dodge the point rather than answer it",
+  "cues": ["what about", "let's talk about", "the real issue is", "speaking of", "anyway"]
+}
+```
+
+### 4. `data/fixtures.json` — a calibration example **[sequential — optional but recommended]**
+
+Add one fallacious example and ideally one sound near-miss. This feeds `calibration.test.js` (the
+sequential flow's 0-false-accusation guarantee). Not required for the checklist to work, but it's
+cheap insurance and documents the fallacy by example.
 
 ```json
 { "id": "rh_clear", "label": "red_herring",
   "argument": "Reporter: the budget has a $2M shortfall. Mayor: what about all the great parks we built last year?",
-  "answers": { "q_detour_or_response": "no", "q_conclusion_matches_support": "no" },
+  "answers": { "q_detour_or_response": "yes", "q_subject_changed": "yes" },
   "default": "unsure" },
 { "id": "rh_nearmiss", "label": "VALID",
-  "argument": "The budget has a shortfall, but note the shortfall is one-time and the parks generate recurring revenue that closes it — here are the figures.",
-  "answers": { "q_detour_or_response": "yes", "q_conclusion_matches_support": "yes" },
+  "argument": "The shortfall is one-time, and the parks generate recurring revenue that closes it — here are the figures.",
+  "answers": { "q_detour_or_response": "no", "q_subject_changed": "no" },
   "default": "no" }
 ```
 
-### 4. Run the tests — all three must pass
+---
+
+## Run the tests — all four must pass
 
 ```bash
 node tests/engine.test.js        # engine math (independent of your data)
-node tests/coverage.test.js      # every fallacy is reachable; aggregate catch above floor
-node tests/calibration.test.js   # hand-written fixtures: 0 false accusations + ≥60% catch
+node tests/checklist.test.js     # THE LIVE FLOW: your fallacy reachable, ≥2 distinctive virtues,
+                                  #   tells valid, never misaccuses, suggestFamily routes
+node tests/coverage.test.js      # sequential reachability (aggregate catch floor)
+node tests/calibration.test.js   # sequential fixtures: 0 false accusations
 ```
 
-`coverage.test.js` is the one that protects you when adding routinely. It auto-derives a textbook
-answer path for **every** fallacy from its weights (no fixture needed) and checks two tiers:
+**`checklist.test.js` is the one that guards routine additions now.** What its messages mean:
 
-- **Tier 1 (hard) — structural reachability.** Every fallacy must have ≥2 entry-pool questions and
-  ≥2 dedicated (incriminating) questions. A new fallacy you forgot to wire in fails the build here.
-  Fixes: **"ENTRY: X has only 1…"** → do §2b; **"DEDICATED: X has only 1…"** → add a question.
-- **Tier 2 (soft→hard) — catch behavior.** It reports each fallacy's catch rate and fails if a
-  **new** fallacy catches weakly, a **previously-working** one regresses, or the **aggregate** mean
-  drops below `AGGREGATE_FLOOR`. A short `KNOWN_WEAK` allowlist grandfathers today's stubborn
-  fallacies (see ARCHITECTURE.md "Known-weak"). **When you add a fallacy, get it catching ≥50% — do
-  NOT add it to `KNOWN_WEAK` to dodge the test.** The allowlist only ever shrinks.
+| message | fix |
+|---|---|
+| `fallacy X needs ≥2 authored tells in families.json` | do step 3(a) |
+| `family Y missing metadata` / `needs ≥3 routing cues` | do step 3(b) |
+| `tell … doesn't incriminate it` / `references unknown question` | the tell's `qid` must be a real question that lists X with `yes > 1` |
+| `only N distinctive virtue/s` | step 2 — give X ≥2 questions it solely owns (strict top weight) |
+| `no distinctive pair accused it` | X's distinctive questions are too weak or too shared; raise `yes` toward 5.0 or pick more distinctive questions |
+| `denying … wrongly accused <other>` | a tell is bleeding into a sibling fallacy — make the question more distinctive to X |
 
 If `calibration.test.js` reports a false accusation on a sound fixture, your `lr` weights are too
-aggressive (or a VALID row is missing its pro-innocence pull). Dial back. The 0-false-accusation
-line is sacred — never relax it to make a catch pass.
+aggressive (or a VALID row lost its pro-innocence pull). Dial back. **The 0-false-accusation line is
+sacred — never relax it to make a catch pass.**
 
 ---
 
 ## What the loader rejects (so you can't ship a gotcha)
 
-`validateBank()` (in `src/engine.js`) throws — the app won't start — if any of these fail. Full
-list in [ENGINE-SPEC.md §4.3](ENGINE-SPEC.md). The ones you'll actually hit:
+`validateBank()` throws — the app won't start — on any of these (full list in
+[ENGINE-SPEC.md §4.3](ENGINE-SPEC.md)):
 
-- **G1** — a question's `lr.VALID.no` must be ≥ 1.0 *and* greater than the lowest fallacy `.no` in
-  that question. Translation: some answer has to be able to raise VALID. A question that can only
-  incriminate is illegal.
-- **G2** — an incriminating `yes` for a fallacy must pair with `VALID.yes ≤ 1.0`; an exonerating
-  `no` must pair with `VALID.no ≥ 1.0`. Incrimination costs VALID; exoneration rewards it.
-- **missing `confirm_check`** — every fallacy needs one; it's what keeps verdicts tentative.
-- **G7** — priors over the cap (lower your base_rates).
+- **G1** — a question's `lr.VALID.no` must be ≥ 1.0 *and* greater than the lowest fallacy `.no`. Some
+  answer must be able to raise VALID; a question that can only incriminate is illegal.
+- **G2** — an incriminating `yes` for a fallacy must pair with `VALID.yes ≤ 1.0`; an exonerating `no`
+  must pair with `VALID.no ≥ 1.0`. Incrimination costs VALID; exoneration rewards it.
+- **missing `confirm_check`** — every fallacy needs one; it keeps verdicts tentative.
+- **G7** — a prior over the 0.15 cap (lower your base_rate).
 
-These aren't style rules. They are the mechanical guarantee that the app stays charitable no
-matter who edits the data.
+These aren't style rules — they're the mechanical guarantee the app stays charitable no matter who
+edits the data.
+
+---
+
+## Quick checklist (tear-off)
+
+```
+□ fallacies.json:  + entry with id, name, base_rate, family, short, teaching, confirm_check
+□ questions.json:  + ≥2 questions this fallacy SOLELY owns (strict-top yes); use yes:4.5 no:0.3;
+                     VALID row 0.6/1.4; tag ≥2 of them ["entry"]
+□ families.json:   + ≥2 tells (positive virtues → its distinctive qids); new family? + metadata + ≥3 cues
+□ fixtures.json:   + one fallacious + one sound near-miss   (recommended)
+□ all four tests green   (engine, checklist, coverage, calibration)
+```

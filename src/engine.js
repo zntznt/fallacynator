@@ -40,11 +40,13 @@ export const CONFIG = {
   // sequential answers, so the leading fallacy peaks lower. A gentler VALID ratio lets two
   // confident ticks of the same fallacy tentatively accuse, while one tick still can't (it stays
   // below VALID). Runner-up + min-mass conditions are unchanged, so we still know WHICH one.
-  CHECKLIST_RATIO_VALID: 0.85, // two ticks land a fallacy at f/VALID ≈ 0.9–1.4 (and ≥4× its
-                               // family runner-up); one tick at ≈ 0.2–0.3. A floor of 0.85 sits
-                               // cleanly between: two deliberate ticks tentatively accuse, one
-                               // never does. (Lower than the sequential 1.5 because two ticks is a
-                               // stronger deliberate signal than two passive sequential answers.)
+  CHECKLIST_RATIO_VALID: 0.55, // Evaluated on FAMILY-LOCAL renormalized beliefs (scoreChecklist).
+                               // In that space, denying one distinctive virtue lands f/VALID ≈ 0.29;
+                               // denying two lands ≈ 0.89. 0.55 sits near the MIDPOINT of that gap,
+                               // so the gate cleanly separates "one denial" (never accuse) from
+                               // "two denials" (accuse) with wide margin on both sides — robust to
+                               // the prior shifts that adding fallacies causes. (Was 0.85, which
+                               // hugged the top of the window and broke when a 14th fallacy was added.)
 
   // VALID exits
   TAU_VALID: 0.75,        // earned-VALID: confident "this holds up"
@@ -470,9 +472,19 @@ export function scoreChecklist(data, { familyId, affirmed = [], denied = [], see
   // Restrict the verdict to this family: the leading fallacy must belong to familyId. We reuse the
   // full Bayesian beliefs (all hypotheses stay normalized), but only consider this family's members
   // as accusation candidates — that's what the routing bought us.
+  //
+  // Field-size invariance: renormalize beliefs over JUST {VALID} ∪ {this family's members} before
+  // applying the gate. Adding a fallacy to a *different* family shrinks every raw prior a little
+  // (the denominator grows), which would otherwise nudge a borderline verdict here. Renormalizing
+  // within the family makes a verdict depend only on this family's evidence — so additions in other
+  // families can never perturb it, and the gate stays correct as the catalog grows to any size.
   const famIds = new Set(data.families[familyId] || []);
-  const P = beliefs(state);
-  const fIds = Object.keys(P).filter((h) => h !== 'VALID' && famIds.has(h));
+  const raw = beliefs(state);
+  const localKeys = ['VALID', ...Object.keys(raw).filter((h) => h !== 'VALID' && famIds.has(h))];
+  const Z = localKeys.reduce((s, h) => s + raw[h], 0) || 1;
+  const P = {};
+  for (const h of localKeys) P[h] = raw[h] / Z;
+  const fIds = localKeys.filter((h) => h !== 'VALID');
   const ranked = fIds.map((f) => [f, P[f]]).sort((a, b) => b[1] - a[1]);
   const [f1, p1] = ranked[0] || [null, 0];
   const p2 = ranked[1] ? ranked[1][1] : 0;
