@@ -236,17 +236,20 @@ export function loadData(fallaciesJSON, questionsJSON, fixturesJSON = null, fami
   // families: family-id → [fallacy ids], from each fallacy's `family` field (singleton fallback).
   const families = {};
   for (const f of fallaciesJSON.fallacies) (families[f.family || f.id] ||= []).push(f.id);
-  // families.json (optional): display metadata + routing cues + checklist tells.
+  // families.json (optional): display metadata + bucket + routing cues + checklist tells.
   const familyMeta = {};
   const familyCues = {};
+  const buckets = (familiesJSON && familiesJSON.buckets) || [];   // [{id,name,prompt}] for the 2-level picker
+  const bucketFamilies = {};                                      // bucket-id → [family ids]
   const tells = (familiesJSON && familiesJSON.tells) || {};
   if (familiesJSON && Array.isArray(familiesJSON.families)) {
     for (const fm of familiesJSON.families) {
-      familyMeta[fm.id] = { id: fm.id, name: fm.name, prompt: fm.prompt };
+      familyMeta[fm.id] = { id: fm.id, name: fm.name, prompt: fm.prompt, bucket: fm.bucket || null };
       familyCues[fm.id] = fm.cues || [];
+      if (fm.bucket) (bucketFamilies[fm.bucket] ||= []).push(fm.id);
     }
   }
-  return { H, fallacies, families, familyMeta, familyCues, tells, questions, fixtures: fixturesJSON, warnings };
+  return { H, fallacies, families, familyMeta, familyCues, buckets, bucketFamilies, tells, questions, fixtures: fixturesJSON, warnings };
 }
 
 // ---------- INIT ----------
@@ -518,6 +521,19 @@ export function suggestFamily(data, text) {
   const scores = {};
   for (const [fam, cues] of Object.entries(data.familyCues || {})) {
     scores[fam] = (cues || []).reduce((n, cue) => n + (hay.includes(cue.toLowerCase()) ? 1 : 0), 0);
+  }
+  const ranked = Object.entries(scores).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  return { top: ranked[0]?.[0] ?? null, scores };
+}
+
+// Suggest a BUCKET (top-level of the 2-level picker) by summing its families' cue hits. Lets the
+// picker pre-open the likely bucket while the user can still choose any. Returns {top, scores}.
+export function suggestBucket(data, text) {
+  const { scores: famScores } = suggestFamily(data, text);
+  const scores = {};
+  for (const [fam, n] of Object.entries(famScores)) {
+    const bucket = data.familyMeta[fam]?.bucket;
+    if (bucket) scores[bucket] = (scores[bucket] || 0) + n;
   }
   const ranked = Object.entries(scores).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
   return { top: ranked[0]?.[0] ?? null, scores };

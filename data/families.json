@@ -23,7 +23,8 @@
         "so-called",
         "typical of",
         "of course you'd say"
-      ]
+      ],
+      "bucket": "relevance"
     },
     {
       "id": "irrelevant_appeal",
@@ -49,7 +50,8 @@
         "for the children",
         "heartless",
         "how can you"
-      ]
+      ],
+      "bucket": "appeals"
     },
     {
       "id": "weak_induction",
@@ -74,7 +76,8 @@
         "i once",
         "this one time",
         "proves that"
-      ]
+      ],
+      "bucket": "induction"
     },
     {
       "id": "presumption",
@@ -98,7 +101,8 @@
         "has to be",
         "it's just true",
         "begs the question"
-      ]
+      ],
+      "bucket": "presumption"
     },
     {
       "id": "deflection",
@@ -836,5 +840,32 @@
         "text": "Backs claims about the person with individual-level evidence, not just the group rate"
       }
     ]
-  }
+  },
+  "buckets": [
+    {
+      "id": "relevance",
+      "name": "It misses the point",
+      "prompt": "The response seems aimed somewhere other than the actual claim"
+    },
+    {
+      "id": "appeals",
+      "name": "It leans on the wrong thing",
+      "prompt": "It seems to lean on feeling, popularity, authority, or tradition more than reasons"
+    },
+    {
+      "id": "presumption",
+      "name": "It assumes too much",
+      "prompt": "It seems to take for granted something it should have established"
+    },
+    {
+      "id": "induction",
+      "name": "It over-reaches the evidence",
+      "prompt": "The conclusion seems to go further than the evidence supports"
+    },
+    {
+      "id": "language",
+      "name": "It plays on words",
+      "prompt": "The wording itself seems to be doing something slippery"
+    }
+  ]
 }

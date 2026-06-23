@@ -5,7 +5,7 @@
 // Flow: paste → (cue scan suggests a family) → pick a family → confirm the argument's virtues
 //       (✓ it does this / ✗ it falls short / skip) → tentative+teaching verdict.
 
-import { loadData, scoreChecklist, suggestFamily } from './engine.js';
+import { loadData, scoreChecklist, suggestFamily, suggestBucket } from './engine.js';
 
 const app = document.getElementById('app');
 const el = (tag, props = {}, ...kids) => {
@@ -88,39 +88,52 @@ function renderStart() {
   };
 }
 
-// ---------- 2. pick a family (cue scan suggests, never decides) ----------
+// ---------- 2. pick a bucket (2-level: bucket → family). Cue scan suggests, never decides. ----------
 function renderFamilyPick() {
   clear();
-  const suggestion = suggestFamily(DATA, argument).top;   // may be null
-  const order = Object.keys(DATA.familyMeta);
-  // put the suggested family first
-  const families = suggestion
-    ? [suggestion, ...order.filter((f) => f !== suggestion)]
+  const famSuggestion = suggestFamily(DATA, argument).top;       // strongest single family (fast path)
+  const bucketSuggestion = suggestBucket(DATA, argument).top;    // likely bucket
+  const order = (DATA.buckets || []).map((b) => b.id);
+  const buckets = bucketSuggestion
+    ? [bucketSuggestion, ...order.filter((b) => b !== bucketSuggestion)]
     : order;
 
   const card = el('section', { className: 'card' });
   if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
   card.append(el('p', { className: 'kicker', textContent: 'Where to look' }));
   card.append(el('h2', { textContent: 'What feels off about it, if anything?' }));
-  if (suggestion) {
-    card.append(el('p', { className: 'muted',
-      textContent: `A quick scan suggests it might be about “${familyName(suggestion)}”, but trust your own read — pick whatever fits.` }));
-  } else {
-    card.append(el('p', { className: 'muted',
-      textContent: 'Pick the kind of problem you suspect — or, if it reads fine, say so.' }));
-  }
+  card.append(el('p', { className: 'muted',
+    textContent: bucketSuggestion
+      ? 'A quick scan suggests a place to start — but trust your own read. Pick the kind of problem, then we’ll narrow it.'
+      : 'Pick the kind of problem you suspect, then we’ll narrow it — or, if it reads fine, say so.' }));
 
   const opts = el('div', { className: 'family-list' });
-  for (const fam of families) {
-    const meta = DATA.familyMeta[fam];
-    const b = el('button', { className: 'family-opt' + (fam === suggestion ? ' suggested' : '') },
+
+  // Fast path: if the scan strongly points at ONE family, offer it directly at the top.
+  if (famSuggestion) {
+    const meta = DATA.familyMeta[famSuggestion];
+    const b = el('button', { className: 'family-opt suggested' },
       el('span', { className: 'family-opt-title', textContent: meta.name }),
       el('span', { className: 'family-opt-sub', textContent: meta.prompt }),
     );
-    b.onclick = () => renderChecklist(fam);
+    b.onclick = () => renderChecklist(famSuggestion);
     opts.append(b);
   }
-  // the goodwill escape hatch
+
+  // The five buckets (each opens its families).
+  const bm = Object.fromEntries((DATA.buckets || []).map((b) => [b.id, b]));
+  for (const bucket of buckets) {
+    const meta = bm[bucket];
+    if (!meta) continue;
+    const b = el('button', { className: 'family-opt' + (bucket === bucketSuggestion ? ' suggested' : '') },
+      el('span', { className: 'family-opt-title', textContent: meta.name }),
+      el('span', { className: 'family-opt-sub', textContent: meta.prompt }),
+    );
+    b.onclick = () => renderBucketFamilies(bucket);
+    opts.append(b);
+  }
+
+  // The goodwill escape hatch.
   const fine = el('button', { className: 'family-opt family-opt-fine' },
     el('span', { className: 'family-opt-title', textContent: 'Nothing — it seems sound' }),
     el('span', { className: 'family-opt-sub', textContent: 'Maybe you’re just being a little skeptical, and that’s okay' }),
@@ -132,6 +145,41 @@ function renderFamilyPick() {
   card.append(el('div', { className: 'row between' },
     el('button', { className: 'btn', textContent: '↺ Start over', onclick: () => { argument = ''; renderStart(); } }),
     el('span', { className: 'muted', textContent: 'You’re looking for what holds up, not hunting for flaws.' }),
+  ));
+  app.append(card);
+}
+
+// ---------- 2b. pick a family within the chosen bucket ----------
+function renderBucketFamilies(bucket) {
+  clear();
+  const bm = Object.fromEntries((DATA.buckets || []).map((b) => [b.id, b]));
+  const famSuggestion = suggestFamily(DATA, argument).top;
+  const fams = (DATA.bucketFamilies[bucket] || []);
+
+  const card = el('section', { className: 'card' });
+  if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
+  card.append(el('p', { className: 'kicker', textContent: bm[bucket]?.name || 'Narrow it down' }));
+  card.append(el('h2', { textContent: 'Which fits best?' }));
+
+  const opts = el('div', { className: 'family-list' });
+  // suggested family first if it's in this bucket
+  const ordered = famSuggestion && fams.includes(famSuggestion)
+    ? [famSuggestion, ...fams.filter((f) => f !== famSuggestion)]
+    : fams;
+  for (const fam of ordered) {
+    const meta = DATA.familyMeta[fam];
+    const b = el('button', { className: 'family-opt' + (fam === famSuggestion ? ' suggested' : '') },
+      el('span', { className: 'family-opt-title', textContent: meta.name }),
+      el('span', { className: 'family-opt-sub', textContent: meta.prompt }),
+    );
+    b.onclick = () => renderChecklist(fam);
+    opts.append(b);
+  }
+  card.append(opts);
+
+  card.append(el('div', { className: 'row between' },
+    el('button', { className: 'btn', textContent: '← Back', onclick: renderFamilyPick }),
+    el('span', { className: 'muted', textContent: 'Not sure? Back up and try a different kind.' }),
   ));
   app.append(card);
 }
