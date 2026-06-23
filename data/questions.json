@@ -69,7 +69,7 @@
     {
       "id": "q_version_refuted_matches",
       "text": "Is the version being argued against a more extreme or absolute version of the claim, or the one actually made?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "strawman": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -78,7 +78,7 @@
     {
       "id": "q_speaker_would_recognize",
       "text": "Would the person who made the claim say the restatement of their position has been changed on a key point, or would they recognize and accept it?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "strawman": { "yes": 4, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -87,7 +87,7 @@
     {
       "id": "q_two_options_or_more",
       "text": "Are the two options presented genuinely the only ones, or is a compromise, a 'both', or a 'neither' realistically available?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "false_dilemma": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -105,7 +105,7 @@
     {
       "id": "q_steps_supported_or_assumed",
       "text": "Are the steps from the first move to the feared outcome treated as certain to follow without support, or shown to be likely?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "slippery_slope": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -123,7 +123,7 @@
     {
       "id": "q_who_said_it_or_why",
       "text": "Is the claim supported mainly by who endorsed it (a respected person, expert, or celebrity), or by reasons you could check?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "appeal_to_authority": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -141,7 +141,7 @@
     {
       "id": "q_sample_supports_breadth",
       "text": "Is a sweeping 'always/everyone' claim resting on one case or a small handful, or does the range of examples match how broad the conclusion is?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "hasty_generalization": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -159,7 +159,7 @@
     {
       "id": "q_support_independent",
       "text": "Does the support already assume the conclusion is true (the reason and the claim restating each other), or is it an independent reason?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "circular_reasoning": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -177,7 +177,7 @@
     {
       "id": "q_feeling_does_the_work",
       "text": "If you set aside the emotional pull (fear, pity, anger), was the feeling carrying the conclusion, or is there still a reason left that supports it?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "appeal_to_emotion": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -195,7 +195,7 @@
     {
       "id": "q_cause_beyond_timing",
       "text": "Does the case rest only on the two things happening together or one before the other, or is there a mechanism or evidence for the cause?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "false_cause": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -204,7 +204,7 @@
     {
       "id": "q_alternatives_ruled_out",
       "text": "Is a correlation read directly as cause, or are other explanations (coincidence, a shared third cause, reverse direction) considered and ruled out?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "false_cause": { "yes": 4, "no": 0.35 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -232,7 +232,7 @@
     {
       "id": "q_natural_label_judges",
       "text": "Is 'natural' (or 'artificial/man-made') being used as the main reason something is good or bad, or is there separate evidence of its actual effects?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "appeal_to_nature": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -259,7 +259,7 @@
     {
       "id": "q_popularity_is_the_reason",
       "text": "Is how many people believe or do it offered as the reason it's true or right, or as one clue alongside independent reasons?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "bandwagon": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -268,7 +268,7 @@
     {
       "id": "q_crowd_or_evidence",
       "text": "Is going along with the crowd treated as the reason to agree, or is independent evidence given beyond 'most people' or 'everyone' agreeing?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "bandwagon": { "yes": 4, "no": 0.35 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -277,7 +277,7 @@
     {
       "id": "q_only_two_camps",
       "text": "Is the choice boxed into exactly two camps when other positions are open, or are the realistic options all on the table?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "false_dilemma": { "yes": 4, "no": 0.35 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -286,7 +286,7 @@
     {
       "id": "q_each_link_inevitable",
       "text": "Is each step from the first move toward the extreme treated as bound to follow, or is the chain shown to be likely at each link?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "slippery_slope": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }
@@ -331,7 +331,7 @@
     {
       "id": "q_natural_settles_it",
       "text": "Is being natural (or not man-made) treated as settling that it is good or safe, or is that judged by its measured effects?",
-      "tags": [],
+      "tags": ["entry"],
       "lr": {
         "appeal_to_nature": { "yes": 4.5, "no": 0.3 },
         "VALID": { "yes": 0.6, "no": 1.4 }

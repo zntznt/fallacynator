@@ -90,8 +90,9 @@ a blank page — that failure is handled, not swallowed.)
 **Tests** — plain Node, no framework:
 
 ```bash
-node tests/engine.test.js
-node tests/calibration.test.js
+node tests/engine.test.js       # the inference math (fixed tiny bank)
+node tests/coverage.test.js     # every fallacy is reachable & catchable (auto-derived paths)
+node tests/calibration.test.js  # hand-written sound/fallacious fixtures: 0 false accusations
 ```
 
 **Hosting** — push to GitHub and enable Pages on the default branch. `.nojekyll` is already there.
@@ -106,3 +107,33 @@ No build, no Actions required; Pages serves the files as-is.
   reading JSON. Adding a fallacy is a data edit; the engine code never changes.
 - **Guardrails in the loader, not in review.** Anti-bias is enforced mechanically (`validateBank` +
   the calibration test) so it survives contributors who never read the principles doc.
+
+## Scaling to a large catalog
+
+The current design (flat field of fallacies, info-gain question selection, a small "entry" pool)
+is comfortable up to roughly **30–40 fallacies**. The constraint is the question budget:
+
+- To catch fallacy F, the engine must ask ~2–3 of F's questions *before* the validity prior
+  consolidates from "no" answers on unrelated dimensions.
+- With a fixed budget (`Q_MAX`) and N fallacies, the share of the budget that can land on any one
+  fallacy shrinks as N grows. Past ~40, no fixed small budget can both survey the field and
+  confirm a suspect.
+
+**Empirically ruled out:** "engine coverage probing" — forcing the narrowing phase to give every
+unprobed fallacy a turn. It was tried and it *reduces* catch rate (it spends the budget exonerating
+the 30+ fallacies the argument *isn't*, pumping VALID, before reaching the guilty one's questions).
+Breadth is the enemy in a small budget; more fallacies makes it strictly worse. Don't re-attempt it.
+
+**The scalable design is hierarchical (family-based) routing:**
+1. Add a `family` field to each fallacy (`relevance`, `causation`, `ambiguity`, `emotion`,
+   `authority`, `induction`, …) — a handful of families covering all fallacies.
+2. A small set of broad **entry questions routes the argument to a family** (cheap: ~2–3 questions
+   to localize "this is a relevance problem" vs "a causal problem").
+3. Only the **3–8 fallacies in the matched family** are then probed deeply. The deep phase runs
+   against a *small* field again, so a ~7-question session works at any catalog size.
+
+This keeps sessions short and every fallacy reachable regardless of N. It's a real engine + schema
+change (new field, two-phase selection, re-tuning), so do it when you actually approach ~40
+fallacies — not before. `tests/coverage.test.js` already guards correctness, so the migration has a
+safety net: it must keep every fallacy catchable. Until then, the rule in
+[ADDING-FALLACIES.md](ADDING-FALLACIES.md) §2b (≥2 entry-pool questions per fallacy) is sufficient.

@@ -83,7 +83,30 @@ A question can point at **several related fallacies** — list them all in `lr` 
 `q_conclusion_matches_support`, which informs circular_reasoning, false_cause, and
 hasty_generalization at once). That gives the question-picker more to work with.
 
-Tag a question `["entry"]` if it's broad enough to *open* a session. Keep ~4–6 entry questions.
+### 2b. Give the fallacy **≥ 2 entry-pool questions** — this is the one that bites
+
+This is the rule learned the hard way, and `tests/coverage.test.js` enforces it. **A fallacy that
+isn't in at least two `["entry"]`-tagged questions will validate, load, and pass the calibration
+test — and then never actually get caught.** Here's why:
+
+The engine picks each question by information gain. Broad questions (touching many fallacies) always
+out-score narrow ones, so a fallacy whose *only* foothold is a narrow question never gets asked
+early enough to rise above the validity prior — it's uncatchable no matter how guilty the argument.
+Every fallacy that catches reliably (ad_hominem, tu_quoque, argument_from_incredulity) has **two or
+more entry-pool presences**; every one that didn't, had one.
+
+Two honest ways to get a second entry presence:
+1. **Add the fallacy to an existing broad entry question** where a "yes" genuinely indicates it.
+   (e.g. `argument_from_incredulity` was added to `q_evidence_or_assertion` — "rests on something
+   other than reasons" honestly covers "I can't imagine how".) Best when a real fit exists.
+2. **Tag one of the fallacy's own dedicated questions `["entry"]`.** Always honest (a dedicated
+   question is a fair probe by definition) and the simplest lever. Use this freely.
+
+Keep the entry pool from ballooning (≤ ~16 entry questions) so the opening phase stays focused.
+
+> **Note for large catalogs (~40+ fallacies):** the entry-pool approach has a ceiling — see
+> [ARCHITECTURE.md](ARCHITECTURE.md) "Scaling to a large catalog". At that size, switch to
+> family-based routing. Below it, ≥2 entry questions per fallacy is enough.
 
 ### 3. Add a calibration fixture to `data/fixtures.json`
 
@@ -103,16 +126,24 @@ how you prove the new fallacy gets caught *and* doesn't cause false accusations.
   "default": "no" }
 ```
 
-### 4. Run the tests
+### 4. Run the tests — all three must pass
 
 ```bash
 node tests/engine.test.js        # engine math (independent of your data)
-node tests/calibration.test.js   # YOUR new data: 0 false accusations + catch-rate floor
+node tests/coverage.test.js      # EVERY fallacy is reachable & catches ≥50% on its textbook case
+node tests/calibration.test.js   # hand-written fixtures: 0 false accusations + ≥60% catch
 ```
 
+`coverage.test.js` is the one that protects you when adding routinely. It auto-derives a textbook
+answer path for **every** fallacy from its weights (no fixture needed) and fails if any fallacy
+can't be reached or can't clear the gate. Its messages are actionable:
+- **"ENTRY: X has only 1 entry-pool question"** → do step 2b (give it a second `["entry"]` presence).
+- **"CATCH: X caught only n/8"** → too few dedicated questions or weights too weak; add a question
+  or bump its `yes` weight toward 5.0.
+
 If `calibration.test.js` reports a false accusation on a sound fixture, your `lr` weights are too
-aggressive (or a VALID row is missing its pro-innocence pull). If your new fallacy is never
-caught, your incriminating weights are too weak or it has too few questions. Adjust and re-run.
+aggressive (or a VALID row is missing its pro-innocence pull). Dial back. The 0-false-accusation
+line is sacred — never relax it to make a catch pass.
 
 ---
 
