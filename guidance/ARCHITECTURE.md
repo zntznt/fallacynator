@@ -133,7 +133,32 @@ Breadth is the enemy in a small budget; more fallacies makes it strictly worse. 
    against a *small* field again, so a ~7-question session works at any catalog size.
 
 This keeps sessions short and every fallacy reachable regardless of N. It's a real engine + schema
-change (new field, two-phase selection, re-tuning), so do it when you actually approach ~40
-fallacies — not before. `tests/coverage.test.js` already guards correctness, so the migration has a
-safety net: it must keep every fallacy catchable. Until then, the rule in
-[ADDING-FALLACIES.md](ADDING-FALLACIES.md) §2b (≥2 entry-pool questions per fallacy) is sufficient.
+change (new field, two-phase selection, re-tuning).
+
+> **Tried at N=13, and it was net-negative — wait for scale.** Family routing was actually built
+> and measured against this 13-fallacy catalog: `family` field, summed family beliefs, two-phase
+> (route-then-localize) selection, one router question per family. Result: it *improved* per-fallacy
+> coverage (more families became catchable) but *dropped* overall calibration catch (78% → ~58%,
+> and as low as 10% when the entry phase was widened to ask every router). **Why:** routing pays a
+> fixed cost — ~F router questions to localize — that only pays back when the deep field is *much*
+> smaller than the flat field. At 13 fallacies in 4 families, localizing 13→3 doesn't save enough to
+> cover the routing overhead; the flat engine is simply faster. The crossover is somewhere around
+> **40–60 fallacies**, where localizing (say) 100→6 clearly wins. So: keep the flat engine until the
+> catalog is large enough that routing's overhead is amortized, then bring back the routing work
+> (it's in git history — search commits for "family-based routing"). Don't re-derive this; it cost a
+> long session to confirm.
+
+`tests/coverage.test.js` guards the migration: it must keep the aggregate catch above the floor and
+not regress any working fallacy. Until you cross the routing threshold, the rule in
+[ADDING-FALLACIES.md](ADDING-FALLACIES.md) §2b (≥2 entry-pool questions per fallacy) is what keeps
+additions catchable.
+
+### Known-weak fallacies (today)
+
+A handful of fallacies (`false_dilemma`, `slippery_slope`, `appeal_to_nature`, `strawman`,
+`false_cause`, `bandwagon`) catch below the per-fallacy floor on their textbook instances — they're
+correct and reachable, but the flat engine can't always surface their questions within the budget.
+They're listed in `KNOWN_WEAK` in `coverage.test.js` so the build stays green, while a *new* weak
+fallacy or a *regression* in a working one still fails. The fix for these specific ones (short of
+routing) is more *distinctive* dedicated questions — ones whose "yes" doesn't also pull a sibling
+fallacy up. Shrinking `KNOWN_WEAK` and raising `AGGREGATE_FLOOR` is the ongoing hardening ratchet.

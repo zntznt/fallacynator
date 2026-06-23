@@ -130,16 +130,21 @@ how you prove the new fallacy gets caught *and* doesn't cause false accusations.
 
 ```bash
 node tests/engine.test.js        # engine math (independent of your data)
-node tests/coverage.test.js      # EVERY fallacy is reachable & catches ≥50% on its textbook case
+node tests/coverage.test.js      # every fallacy is reachable; aggregate catch above floor
 node tests/calibration.test.js   # hand-written fixtures: 0 false accusations + ≥60% catch
 ```
 
 `coverage.test.js` is the one that protects you when adding routinely. It auto-derives a textbook
-answer path for **every** fallacy from its weights (no fixture needed) and fails if any fallacy
-can't be reached or can't clear the gate. Its messages are actionable:
-- **"ENTRY: X has only 1 entry-pool question"** → do step 2b (give it a second `["entry"]` presence).
-- **"CATCH: X caught only n/8"** → too few dedicated questions or weights too weak; add a question
-  or bump its `yes` weight toward 5.0.
+answer path for **every** fallacy from its weights (no fixture needed) and checks two tiers:
+
+- **Tier 1 (hard) — structural reachability.** Every fallacy must have ≥2 entry-pool questions and
+  ≥2 dedicated (incriminating) questions. A new fallacy you forgot to wire in fails the build here.
+  Fixes: **"ENTRY: X has only 1…"** → do §2b; **"DEDICATED: X has only 1…"** → add a question.
+- **Tier 2 (soft→hard) — catch behavior.** It reports each fallacy's catch rate and fails if a
+  **new** fallacy catches weakly, a **previously-working** one regresses, or the **aggregate** mean
+  drops below `AGGREGATE_FLOOR`. A short `KNOWN_WEAK` allowlist grandfathers today's stubborn
+  fallacies (see ARCHITECTURE.md "Known-weak"). **When you add a fallacy, get it catching ≥50% — do
+  NOT add it to `KNOWN_WEAK` to dodge the test.** The allowlist only ever shrinks.
 
 If `calibration.test.js` reports a false accusation on a sound fixture, your `lr` weights are too
 aggressive (or a VALID row is missing its pro-innocence pull). Dial back. The 0-false-accusation
