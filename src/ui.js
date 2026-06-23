@@ -1,8 +1,11 @@
-// Fallacynator UI — a thin render-from-state controller.
-// All reasoning lives in the (tested) engine; this file just asks status(state),
-// renders one screen, and feeds answers back. Adding a fallacy never touches this file.
+// Fallacynator UI — positive-first, family-routed checklist.
+// All reasoning lives in the (tested) engine; this file gathers a paste, a family choice, and a
+// virtue checklist, then asks the engine to score. Adding a fallacy never touches this file.
+//
+// Flow: paste → (cue scan suggests a family) → pick a family → confirm the argument's virtues
+//       (✓ it does this / ✗ it falls short / skip) → tentative+teaching verdict.
 
-import { loadData, newSession, answer, status, confirmVerdict, CONFIG } from './engine.js';
+import { loadData, scoreChecklist, suggestFamily } from './engine.js';
 
 const app = document.getElementById('app');
 const el = (tag, props = {}, ...kids) => {
@@ -10,30 +13,21 @@ const el = (tag, props = {}, ...kids) => {
   for (const k of kids) n.append(k);
   return n;
 };
-const esc = (s) => String(s);
 
-// answer labels — charitable phrasing, in the order the engine expects
-const ANSWER_LABELS = [
-  ['yes', 'Yes'],
-  ['no', 'No'],
-  ['maybe', 'Kind of'],
-  ['unsure', "I can't tell"],
-];
-
-let DATA = null;       // loaded bank
-let session = null;    // current engine state
-let argument = '';     // the text the user pasted, for recall
+let DATA = null;       // loaded bank (incl. families, familyMeta, familyCues, tells)
+let argument = '';     // the pasted argument, for reference + cue scan
 
 // ---------- bootstrap ----------
 boot();
 
 async function boot() {
   try {
-    const [fallacies, questions] = await Promise.all([
+    const [fallacies, questions, families] = await Promise.all([
       fetchJSON('data/fallacies.json'),
       fetchJSON('data/questions.json'),
+      fetchJSON('data/families.json'),
     ]);
-    DATA = loadData(fallacies, questions);
+    DATA = loadData(fallacies, questions, null, families);
     if (DATA.warnings?.length) console.warn('validateBank warnings:', DATA.warnings);
     renderStart();
   } catch (err) {
@@ -57,9 +51,10 @@ async function fetchJSON(path) {
   return res.json();
 }
 
-// ---------- screens ----------
-function clear() { app.replaceChildren(); }
+const clear = () => app.replaceChildren();
+const familyName = (id) => DATA.familyMeta[id]?.name || id;
 
+// ---------- 1. paste ----------
 function renderStart() {
   clear();
   const ta = el('textarea', {
@@ -74,14 +69,14 @@ function renderStart() {
     el('p', {
       className: 'lede',
       textContent:
-        'Paste an argument you’re unsure about. We’ll think it through together — ' +
-        'starting from the assumption that it’s sound, and only flagging a problem if the ' +
-        'evidence really holds up. No accounts, no AI, nothing leaves your browser.',
+        'Paste an argument you’re unsure about. We’ll read it as fairly as we can, ' +
+        'look at what it does well, and only flag a problem if the good-faith reading ' +
+        'genuinely falls short. No accounts, no AI, nothing leaves your browser.',
     }),
     ta,
     el('div', { className: 'row end' }, begin),
     el('p', { className: 'muted', style: 'margin-top:1rem',
-      textContent: 'Tip: read it as charitably as you can first. Good arguments deserve a fair hearing.' }),
+      textContent: 'Read it as charitably as you can first. Good arguments deserve a fair hearing.' }),
   );
   app.append(card);
   ta.focus();
@@ -89,58 +84,125 @@ function renderStart() {
   begin.onclick = () => {
     argument = ta.value.trim();
     if (!argument) { ta.focus(); ta.style.outline = '2px solid var(--suspect)'; return; }
-    session = newSession(DATA);
-    advance();
+    renderFamilyPick();
   };
 }
 
-// ask the engine what's next and render it
-function advance() {
-  const st = status(session);
-  if (!st.stop) return renderQuestion(st.nextQuestion);
-  switch (st.kind) {
-    case 'accuse': return renderAccuse(st);
-    case 'valid_earned': return renderValid('earned');
-    case 'cynic_valid': return renderValid('lead');
-    case 'cynic_unsure': return renderCynic('unsure');
-    case 'inconclusive_lean': return renderInconclusive(st);
-    default: return renderValid('lead');
-  }
-}
-
-function progressPips(asked) {
-  const wrap = el('div', { className: 'progress' });
-  for (let i = 0; i < CONFIG.Q_MAX; i++) {
-    wrap.append(el('div', { className: 'pip' + (i < asked ? ' on' : '') }));
-  }
-  return wrap;
-}
-
-function renderQuestion(q) {
+// ---------- 2. pick a family (cue scan suggests, never decides) ----------
+function renderFamilyPick() {
   clear();
-  const card = el('section', { className: 'card' });
-  card.append(progressPips(session.answers.length));
-  if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
-  card.append(el('p', { className: 'kicker', textContent: 'Let’s look at one thing' }));
-  card.append(el('p', { className: 'question-text', textContent: q.text }));
+  const suggestion = suggestFamily(DATA, argument).top;   // may be null
+  const order = Object.keys(DATA.familyMeta);
+  // put the suggested family first
+  const families = suggestion
+    ? [suggestion, ...order.filter((f) => f !== suggestion)]
+    : order;
 
-  const answers = el('div', { className: 'answers' });
-  for (const [val, label] of ANSWER_LABELS) {
-    const b = el('button', { className: 'btn', textContent: label });
-    b.onclick = () => { answer(session, q.id, val); advance(); };
-    answers.append(b);
+  const card = el('section', { className: 'card' });
+  if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
+  card.append(el('p', { className: 'kicker', textContent: 'Where to look' }));
+  card.append(el('h2', { textContent: 'What feels off about it, if anything?' }));
+  if (suggestion) {
+    card.append(el('p', { className: 'muted',
+      textContent: `A quick scan suggests it might be about “${familyName(suggestion)}”, but trust your own read — pick whatever fits.` }));
+  } else {
+    card.append(el('p', { className: 'muted',
+      textContent: 'Pick the kind of problem you suspect — or, if it reads fine, say so.' }));
   }
-  card.append(answers);
+
+  const opts = el('div', { className: 'family-list' });
+  for (const fam of families) {
+    const meta = DATA.familyMeta[fam];
+    const b = el('button', { className: 'family-opt' + (fam === suggestion ? ' suggested' : '') },
+      el('span', { className: 'family-opt-title', textContent: meta.name }),
+      el('span', { className: 'family-opt-sub', textContent: meta.prompt }),
+    );
+    b.onclick = () => renderChecklist(fam);
+    opts.append(b);
+  }
+  // the goodwill escape hatch
+  const fine = el('button', { className: 'family-opt family-opt-fine' },
+    el('span', { className: 'family-opt-title', textContent: 'Nothing — it seems sound' }),
+    el('span', { className: 'family-opt-sub', textContent: 'Maybe you’re just being a little skeptical, and that’s okay' }),
+  );
+  fine.onclick = () => renderVerdict(scoreChecklist(DATA, { familyId: 'none' }));
+  opts.append(fine);
+  card.append(opts);
+
   card.append(el('div', { className: 'row between' },
-    el('button', { className: 'btn', textContent: '↺ Start over', onclick: renderStart }),
-    el('span', { className: 'muted', textContent: '“Kind of” and “I can’t tell” lean toward giving the argument the benefit of the doubt.' }),
+    el('button', { className: 'btn', textContent: '↺ Start over', onclick: () => { argument = ''; renderStart(); } }),
+    el('span', { className: 'muted', textContent: 'You’re looking for what holds up, not hunting for flaws.' }),
   ));
   app.append(card);
 }
 
-function renderAccuse(st) {
+// ---------- 3. the positive-first virtue checklist ----------
+function renderChecklist(familyId) {
   clear();
-  const f = DATA.fallacies[st.fallacy];
+  // Collect every tell for the family's fallacies, de-duplicated by question id (a question shared
+  // across siblings appears once). Each row is a virtue the user marks ✓ / ✗ / skip.
+  const seen = new Set();
+  const rows = [];
+  for (const fid of DATA.families[familyId]) {
+    for (const t of (DATA.tells[fid] || [])) {
+      if (seen.has(t.qid)) continue;
+      seen.add(t.qid);
+      rows.push({ qid: t.qid, text: t.text });
+    }
+  }
+  const choice = {};   // qid -> 'has' | 'lacks'  (absent = skip)
+
+  const card = el('section', { className: 'card' });
+  if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
+  card.append(el('p', { className: 'kicker', textContent: familyName(familyId) }));
+  card.append(el('h2', { textContent: 'Which of these does the argument do?' }));
+  card.append(el('p', { className: 'muted',
+    textContent: 'Tick ✓ for what it does well, ✗ for what it falls short on, and leave the rest blank. We start by assuming it holds up.' }));
+
+  const list = el('div', { className: 'checklist' });
+  for (const r of rows) {
+    const has = el('button', { className: 'tri tri-has', textContent: '✓', title: 'It does this' });
+    const lacks = el('button', { className: 'tri tri-lacks', textContent: '✗', title: 'It falls short here' });
+    const row = el('div', { className: 'check-row' },
+      el('span', { className: 'check-text', textContent: r.text }),
+      el('span', { className: 'tri-group' }, has, lacks),
+    );
+    const refresh = () => {
+      has.classList.toggle('on', choice[r.qid] === 'has');
+      lacks.classList.toggle('on', choice[r.qid] === 'lacks');
+    };
+    has.onclick = () => { choice[r.qid] = choice[r.qid] === 'has' ? undefined : 'has'; refresh(); };
+    lacks.onclick = () => { choice[r.qid] = choice[r.qid] === 'lacks' ? undefined : 'lacks'; refresh(); };
+    list.append(row);
+  }
+  card.append(list);
+
+  const see = el('button', { className: 'btn btn-primary', textContent: 'See what holds up →' });
+  see.onclick = () => {
+    const affirmed = Object.keys(choice).filter((q) => choice[q] === 'has');
+    const denied = Object.keys(choice).filter((q) => choice[q] === 'lacks');
+    renderVerdict(scoreChecklist(DATA, { familyId, affirmed, denied }), familyId);
+  };
+  card.append(el('div', { className: 'row between' },
+    el('button', { className: 'btn', textContent: '← Pick a different focus', onclick: renderFamilyPick }),
+    see,
+  ));
+  app.append(card);
+}
+
+// ---------- 4. verdicts (tentative + teaching) ----------
+function renderVerdict(result, familyId) {
+  clear();
+  switch (result.kind) {
+    case 'accuse': return renderAccuse(result);
+    case 'inconclusive_lean': return renderInconclusive(result);
+    case 'cynic_valid':
+    default: return renderValid(familyId);
+  }
+}
+
+function renderAccuse(result) {
+  const f = DATA.fallacies[result.fallacy];
   const yes = el('button', { className: 'btn btn-primary', textContent: 'Yes — that fits' });
   const no = el('button', { className: 'btn', textContent: 'No — that’s not it' });
   const card = el('section', { className: 'card verdict-accuse' },
@@ -155,15 +217,8 @@ function renderAccuse(st) {
     el('div', { className: 'answers' }, yes, no),
   );
   app.append(card);
-
-  yes.onclick = () => {
-    confirmVerdict(session, true);
-    renderConfirmed(f);
-  };
-  no.onclick = () => {
-    confirmVerdict(session, false);
-    renderCynic('rejected', f);
-  };
+  yes.onclick = () => renderConfirmed(f);
+  no.onclick = () => renderCynic('rejected', f);
 }
 
 function renderConfirmed(f) {
@@ -171,52 +226,18 @@ function renderConfirmed(f) {
   app.append(el('section', { className: 'card verdict-accuse' },
     el('p', { className: 'kicker', textContent: 'You made the call' }),
     el('p', { className: 'verdict-title', textContent: `Looks like a ${f.name}.` }),
-    el('p', {},
+    el('p', { textContent:
       'You confirmed it — the argument seems to rest on this rather than on its own merits. ' +
       'Naming a fallacy isn’t a “gotcha,” though: the underlying point might still be worth ' +
-      'engaging once it’s argued fairly.'),
+      'engaging once it’s argued fairly.' }),
     el('p', { className: 'muted', textContent: 'Spotting the flaw is the easy part. Steelmanning what’s left is the generous one.' }),
     restartRow(),
   ));
 }
 
-function renderValid(reason) {
+function renderInconclusive(result) {
   clear();
-  const lede = reason === 'earned'
-    ? 'You worked through it, and the reasoning holds up. No clear fallacy here — the argument earns a fair hearing.'
-    : 'Nothing rose above the benefit of the doubt. There’s no clear fallacy here — the argument holds up well enough.';
-  app.append(el('section', { className: 'card verdict-valid' },
-    el('p', { className: 'kicker', textContent: 'The verdict' }),
-    el('p', { className: 'verdict-title', textContent: 'The argument holds up.' }),
-    el('p', { textContent: lede }),
-    el('p', { className: 'muted', textContent: 'That’s a real result — most arguments aren’t fallacies. Disagreeing is fine; just engage the actual point.' }),
-    restartRow(),
-  ));
-}
-
-function renderCynic(why, rejectedFallacy) {
-  clear();
-  let body;
-  if (why === 'rejected') {
-    body = `You looked at the suspicion of ${rejectedFallacy.name} and decided it didn’t fit — ` +
-      `good. We won’t reach for a second-best accusation. The argument may simply be sound, ` +
-      `and you may just be a little skeptical. That’s an honest place to land.`;
-  } else {
-    body = 'You weren’t sure on most of these, and that’s okay. We won’t manufacture a verdict ' +
-      'out of uncertainty. There may be no fallacy here at all — you might just be feeling skeptical.';
-  }
-  app.append(el('section', { className: 'card verdict-cynic' },
-    el('p', { className: 'kicker', textContent: 'The verdict' }),
-    el('p', { className: 'verdict-title', textContent: '…or maybe you’re just being a little cynical.' }),
-    el('p', { textContent: body }),
-    el('p', { className: 'muted', textContent: 'Skepticism is healthy. Treating every argument as guilty is the thing worth resisting.' }),
-    restartRow(),
-  ));
-}
-
-function renderInconclusive(st) {
-  clear();
-  const f = st.leanFallacy ? DATA.fallacies[st.leanFallacy] : null;
+  const f = result.leanFallacy ? DATA.fallacies[result.leanFallacy] : null;
   const lean = f
     ? `There might be something here — possibly a ${f.name} — but not enough to call it.`
     : 'There might be something here, but not enough to call it.';
@@ -229,9 +250,40 @@ function renderInconclusive(st) {
   ));
 }
 
+function renderValid(familyId) {
+  clear();
+  const body = familyId
+    ? 'You looked closely and it holds up — what you checked came out in the argument’s favor. No clear fallacy here.'
+    : 'You read it fairly and nothing rose above the benefit of the doubt. There’s no clear fallacy — the argument holds up well enough.';
+  app.append(el('section', { className: 'card verdict-valid' },
+    el('p', { className: 'kicker', textContent: 'The verdict' }),
+    el('p', { className: 'verdict-title', textContent: 'The argument holds up.' }),
+    el('p', { textContent: body }),
+    el('p', { className: 'muted', textContent: 'That’s a real result — most arguments aren’t fallacies. Disagreeing is fine; just engage the actual point.' }),
+    restartRow(),
+  ));
+}
+
+function renderCynic(why, rejectedFallacy) {
+  clear();
+  const body = why === 'rejected'
+    ? `You looked at the suspicion of ${rejectedFallacy.name} and decided it didn’t fit — good. ` +
+      `We won’t reach for a second-best accusation. The argument may simply be sound, and you may ` +
+      `just be a little skeptical. That’s an honest place to land.`
+    : 'There may be no fallacy here at all — you might just be feeling skeptical, and that’s okay.';
+  app.append(el('section', { className: 'card verdict-cynic' },
+    el('p', { className: 'kicker', textContent: 'The verdict' }),
+    el('p', { className: 'verdict-title', textContent: '…or maybe you’re just being a little cynical.' }),
+    el('p', { textContent: body }),
+    el('p', { className: 'muted', textContent: 'Skepticism is healthy. Treating every argument as guilty is the thing worth resisting.' }),
+    restartRow(),
+  ));
+}
+
 function restartRow() {
   return el('div', { className: 'row end' },
-    el('button', { className: 'btn btn-primary', textContent: 'Examine another →', onclick: () => { argument = ''; renderStart(); } }),
+    el('button', { className: 'btn btn-primary', textContent: 'Examine another →',
+      onclick: () => { argument = ''; renderStart(); } }),
   );
 }
 

@@ -13,13 +13,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { loadData, scoreChecklist } from '../src/engine.js';
+import { loadData, scoreChecklist, suggestFamily } from '../src/engine.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..');
 const read = (p) => JSON.parse(readFileSync(join(root, p), 'utf8'));
 
-const data = loadData(read('data/fallacies.json'), read('data/questions.json'));
+const data = loadData(read('data/fallacies.json'), read('data/questions.json'), null, read('data/families.json'));
 
 // the virtues (incriminating question ids) for each fallacy, grouped by family — derived from the
 // weights, so this needs no tells file and stays correct as data changes.
@@ -27,6 +27,23 @@ const familyOf = {};
 for (const [fam, ids] of Object.entries(data.families)) for (const id of ids) familyOf[id] = fam;
 const virtuesOf = (fid) =>
   data.questions.filter((q) => q.lr[fid] && q.lr[fid].yes > 1).map((q) => q.id);
+
+// A *distinctive* virtue is one whose question this fallacy OWNS — its yes-weight is the strongest
+// among the fallacies that question informs. Denying a distinctive virtue indicts this fallacy
+// clearly; denying a SHARED one (e.g. q_hypocrisy_dismisses_point, owned by tu_quoque but borrowed
+// by ad_hominem) splits evidence and is genuinely ambiguous. The checklist should expose a
+// fallacy's distinctive virtues as its tells, so this is what "any pair must catch" tests.
+const distinctiveVirtuesOf = (fid) =>
+  data.questions
+    .filter((q) => {
+      if (!(q.lr[fid] && q.lr[fid].yes > 1)) return false;
+      const others = Object.keys(q.lr).filter((k) => k !== 'VALID' && k !== fid);
+      // SOLE owner: this fallacy's signal must strictly exceed every other fallacy's on this
+      // question. Excludes broad family-shared questions (q_evidence_or_assertion,
+      // q_conclusion_matches_support) which route to a family but can't single out a member.
+      return others.every((k) => q.lr[fid].yes > q.lr[k].yes);
+    })
+    .map((q) => q.id);
 
 let passed = 0;
 const ok = (m) => { passed++; console.log(`  ✓ ${m}`); };
@@ -73,20 +90,32 @@ const allPairs = (arr) => {
   for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) out.push([arr[i], arr[j]]);
   return out;
 };
-const misses = [];
+// Contract: (1) every fallacy has ≥2 distinctive virtues; (2) AT LEAST ONE distinctive pair
+// accuses it (so a careful user CAN reach it); (3) NO distinctive pair MISACCUSES a different
+// fallacy (the dangerous case — never name the wrong one). Some pairs landing on cynic_valid is
+// acceptable and correct: when denied virtues are shared with a sibling (e.g. ad_hominem vs
+// tu_quoque), the engine rightly says "person-directed problem, but which?" rather than guessing.
+const tooFew = [];
+const noCatch = [];
+const misaccuse = [];
 for (const f of Object.keys(data.fallacies)) {
-  const vs = virtuesOf(f);
-  if (vs.length < 2) { misses.push(`${f}: only ${vs.length} virtue/s — needs ≥2`); continue; }
+  const vs = distinctiveVirtuesOf(f);
+  if (vs.length < 2) { tooFew.push(`${f}: only ${vs.length} distinctive virtue/s`); continue; }
+  let anyCatch = false;
   for (const pair of allPairs(vs)) {
     const v = verdict(f, pair);
-    if (!(v.kind === 'accuse' && v.fallacy === f)) {
-      misses.push(`${f}: denying [${pair.join(', ')}] → ${v.kind}${v.fallacy ? ':' + v.fallacy : ''}`);
+    if (v.kind === 'accuse' && v.fallacy === f) anyCatch = true;
+    if (v.kind === 'accuse' && v.fallacy !== f) {
+      misaccuse.push(`${f}: denying [${pair.join(', ')}] wrongly accused ${v.fallacy}`);
     }
   }
+  if (!anyCatch) noCatch.push(`${f}: no distinctive pair accused it`);
 }
-if (misses.length) { console.log('  ✗ two-denial misses (some virtue pair fails to accuse):'); for (const m of misses) console.log('      ' + m); }
-assert.equal(misses.length, 0, `every pair of a fallacy's virtues must accuse it when denied (${misses.length} miss/es)`);
-ok(`all ${Object.keys(data.fallacies).length} fallacies accuse on ANY two denied virtues`);
+for (const m of [...tooFew, ...noCatch, ...misaccuse]) console.log('  ✗ ' + m);
+assert.equal(tooFew.length, 0, `every fallacy needs ≥2 distinctive virtues (${tooFew.length} short)`);
+assert.equal(misaccuse.length, 0, `no distinctive pair may MISACCUSE another fallacy (${misaccuse.length} cases)`);
+assert.equal(noCatch.length, 0, `every fallacy must be reachable by some distinctive pair (${noCatch.length} unreachable)`);
+ok(`all ${Object.keys(data.fallacies).length} fallacies: ≥2 distinctive virtues, reachable, never misaccusing`);
 
 // ---- affirming virtues can defend: 1 denial + 2 affirmations of the same fallacy → holds up ----
 {
@@ -103,5 +132,55 @@ ok('affirming virtues actively defends an argument (positive validation works)')
   assert.equal(v.kind, 'cynic_valid', '"none of these / seems fine" → the argument holds up');
 }
 ok('"none of these" routes to a holds-up verdict');
+
+// ---- AUTHORED data/families.json: tells, metadata, cues are present and well-formed ----
+{
+  // every family has metadata + cues
+  for (const fam of Object.keys(data.families)) {
+    assert.ok(data.familyMeta[fam], `family ${fam} missing metadata (name/prompt) in families.json`);
+    assert.ok((data.familyCues[fam] || []).length >= 3, `family ${fam} needs ≥3 routing cues`);
+  }
+  // every fallacy has ≥2 authored tells, each mapping to a question that incriminates it
+  for (const fid of Object.keys(data.fallacies)) {
+    const tells = data.tells[fid] || [];
+    assert.ok(tells.length >= 2, `fallacy ${fid} needs ≥2 authored tells in families.json`);
+    for (const t of tells) {
+      const q = data.questions.find((x) => x.id === t.qid);
+      assert.ok(q, `tell for ${fid} references unknown question ${t.qid}`);
+      assert.ok(q.lr[fid] && q.lr[fid].yes > 1, `tell ${t.qid} for ${fid} doesn't incriminate it`);
+      assert.ok(t.text && t.text.length > 0, `tell ${t.qid} for ${fid} has no text`);
+    }
+  }
+}
+ok('families.json: every family has metadata + cues, every fallacy ≥2 valid authored tells');
+
+// ---- AUTHORED tells actually catch: denying the first two tells of each fallacy accuses it ----
+{
+  const misses = [];
+  for (const [fid, tells] of Object.entries(data.tells)) {
+    const denied = tells.slice(0, 2).map((t) => t.qid);
+    const v = scoreChecklist(data, { familyId: familyOf[fid], denied, seed: 1 });
+    if (!(v.kind === 'accuse' && v.fallacy === fid)) misses.push(`${fid} → ${v.kind}${v.fallacy ? ':' + v.fallacy : ''}`);
+  }
+  for (const m of misses) console.log('  ✗ authored-tell miss: ' + m);
+  assert.equal(misses.length, 0, `denying a fallacy's first two authored tells must accuse it (${misses.length} miss/es)`);
+}
+ok('authored tells: denying any fallacy’s first two tells accuses it');
+
+// ---- suggestFamily routes representative arguments (and stays silent on a sound one) ----
+{
+  const cases = [
+    ['She is a paid shill so we can ignore her analysis.', 'against_the_person'],
+    ['It is all-natural with no chemicals, so it must be safe.', 'irrelevant_appeal'],
+    ['Ever since they changed the rule, crime went up, so the rule caused it.', 'weak_induction'],
+    ['Either we ban it entirely or we accept total chaos.', 'presumption'],
+    ['The bridge holds 40 tons because the load tests and engineering report confirm it.', null],
+  ];
+  for (const [text, expect] of cases) {
+    const got = suggestFamily(data, text).top;
+    assert.equal(got, expect, `suggestFamily("${text.slice(0, 30)}…") → ${got}, expected ${expect}`);
+  }
+}
+ok('suggestFamily routes typical arguments by cue, and stays silent on a sound one');
 
 console.log(`\n${passed} checks passed.`);

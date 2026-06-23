@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "families": [
+    {
+      "id": "against_the_person",
+      "name": "Against the person",
+      "prompt": "It seems to answer the person or a reworded version of their point, more than the point itself",
+      "cues": [
+        "you're just", "you are just", "she's a", "he's a", "they're just",
+        "hypocrite", "hypocritical", "paid shill", "shill", "biased",
+        "what about you", "you do it too", "look who's talking", "coming from someone",
+        "so-called", "typical of", "of course you'd say"
+      ]
+    },
+    {
+      "id": "irrelevant_appeal",
+      "name": "Leans on something beside the evidence",
+      "prompt": "It seems to lean on a feeling, a name, naturalness, or popularity more than on reasons",
+      "cues": [
+        "natural", "all-natural", "chemical", "man-made", "artificial",
+        "everyone knows", "everybody", "most people", "we all", "popular",
+        "experts say", "scientists agree", "doctors recommend", "celebrity",
+        "think of the", "imagine how", "for the children", "heartless", "how can you"
+      ]
+    },
+    {
+      "id": "weak_induction",
+      "name": "Leaps past the evidence",
+      "prompt": "The conclusion seems to reach further than the evidence given carries it",
+      "cues": [
+        "always", "never", "everyone i", "every time", "all of them",
+        "ever since", "after that", "right after", "led to", "caused by",
+        "will end up", "next thing", "slippery slope", "before you know it",
+        "in my experience", "i once", "this one time", "proves that"
+      ]
+    },
+    {
+      "id": "presumption",
+      "name": "Assumes what it should establish",
+      "prompt": "It seems to take its starting point for granted instead of supporting it",
+      "cues": [
+        "either", "or else", "only two", "the only option", "no other",
+        "by definition", "obviously true", "of course it's true", "everyone agrees it's",
+        "can't imagine", "cannot imagine", "no way that", "makes no sense that",
+        "must be false", "has to be", "it's just true", "begs the question"
+      ]
+    }
+  ],
+  "tells": {
+    "ad_hominem": [
+      { "qid": "q_responds_to_claim_or_person", "text": "Engages the claim itself, not the character or motives of who made it" },
+      { "qid": "q_distrust_speaker_settles_truth", "text": "Weighs the claim on its own merits, not on reasons to distrust the speaker" },
+      { "qid": "q_claim_addressed_or_left_standing", "text": "Actually addresses the original point rather than shifting focus to the speaker" }
+    ],
+    "strawman": [
+      { "qid": "q_version_refuted_matches", "text": "Argues against the claim as actually made, not an exaggerated or absolute version" },
+      { "qid": "q_speaker_would_recognize", "text": "Restates the other side's position in a way they would recognize and accept" }
+    ],
+    "tu_quoque": [
+      { "qid": "q_hypocrisy_dismisses_point", "text": "Answers the criticism on its merits, not by pointing at the critic's own conduct" },
+      { "qid": "q_double_standard_is_the_topic", "text": "Any inconsistency it raises is genuinely the issue, not just a way to deflect" }
+    ],
+    "appeal_to_authority": [
+      { "qid": "q_who_said_it_or_why", "text": "Rests on reasons you could check, not mainly on who endorsed it" },
+      { "qid": "q_expertise_fits_topic", "text": "Any cited expert actually fits the topic and isn't treated as the whole case" },
+      { "qid": "q_prestige_carries_it", "text": "The case would hold without the prestige of the name attached to it" }
+    ],
+    "appeal_to_emotion": [
+      { "qid": "q_feeling_does_the_work", "text": "A real reason remains once the emotional pull (fear, pity, anger) is set aside" },
+      { "qid": "q_emotion_or_reason_persuades", "text": "Persuades by reasons that would still stand if the case were put calmly" },
+      { "qid": "q_feeling_is_the_push", "text": "The push toward the conclusion is a reason, not mainly a feeling" }
+    ],
+    "appeal_to_nature": [
+      { "qid": "q_natural_label_judges", "text": "Judges good or bad by actual effects, not by the 'natural' or 'artificial' label" },
+      { "qid": "q_naturalness_checks_case", "text": "Checks this specific case for benefit or harm, not naturalness alone" },
+      { "qid": "q_natural_equals_good", "text": "Ties its verdict to measured benefit or harm, not 'natural means good'" }
+    ],
+    "bandwagon": [
+      { "qid": "q_popularity_is_the_reason", "text": "Rests on reasons, not on how many people believe or do it" },
+      { "qid": "q_crowd_or_evidence", "text": "Gives independent evidence beyond 'most people' or 'everyone' agreeing" }
+    ],
+    "hasty_generalization": [
+      { "qid": "q_sample_supports_breadth", "text": "The breadth of the conclusion matches how much evidence backs it" },
+      { "qid": "q_examples_representative", "text": "The examples look representative, not cherry-picked or one-off anecdotes" }
+    ],
+    "false_cause": [
+      { "qid": "q_cause_beyond_timing", "text": "Offers a mechanism or evidence for the cause, beyond just timing or correlation" },
+      { "qid": "q_alternatives_ruled_out", "text": "Considers and rules out other explanations (coincidence, a shared cause)" },
+      { "qid": "q_timing_is_whole_case", "text": "The case is more than 'one came first, so it caused the other'" }
+    ],
+    "slippery_slope": [
+      { "qid": "q_steps_supported_or_assumed", "text": "The steps from the first move to the feared outcome are actually supported" },
+      { "qid": "q_outcome_proportionate", "text": "The predicted outcome is proportionate to the small step being discussed" },
+      { "qid": "q_each_link_inevitable", "text": "Each link in the chain is shown to be likely, not just assumed to follow" }
+    ],
+    "false_dilemma": [
+      { "qid": "q_two_options_or_more", "text": "Presents the real range of options, not just two when a 'both' or 'neither' exists" },
+      { "qid": "q_middle_ground_excluded", "text": "Leaves a workable middle ground or 'do both' on the table" },
+      { "qid": "q_only_two_camps", "text": "Allows positions beyond exactly two camps" }
+    ],
+    "circular_reasoning": [
+      { "qid": "q_support_independent", "text": "The support is an independent reason, not a restatement of the conclusion" },
+      { "qid": "q_persuades_only_agreers", "text": "Would persuade someone who doesn't already accept the conclusion" },
+      { "qid": "q_reason_restates_claim", "text": "The reason adds something the conclusion did not already say" }
+    ],
+    "argument_from_incredulity": [
+      { "qid": "q_rejected_for_unimaginable", "text": "Rejects the claim on evidence, not because the speaker can't picture how it could be true" },
+      { "qid": "q_cant_see_how_means_false", "text": "Gives an actual reason against the claim, not just 'I don't see how'" },
+      { "qid": "q_limit_is_speaker_not_claim", "text": "The doubt points to something implausible about the claim, not a gap in imagination" }
+    ]
+  }
+}
