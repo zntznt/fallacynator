@@ -209,16 +209,28 @@ function renderChecklist(familyId) {
   steelyStage('checklist');
   // Collect every tell for the family's fallacies, de-duplicated by question id (a question shared
   // across siblings appears once). Each row is a plain "Does it…?" question the user answers 👍 / 👎 / skip.
+  // Carry each tell's diagnostic weight (its strongest yes-likelihood across the family's fallacies)
+  // so we can lead with the most telling questions — see the progressive-disclosure split below.
+  const qById = Object.fromEntries((DATA.questions || []).map((q) => [q.id, q]));
   const seen = new Set();
   const rows = [];
   for (const fid of DATA.families[familyId]) {
     for (const t of (DATA.tells[fid] || [])) {
       if (seen.has(t.qid)) continue;
       seen.add(t.qid);
-      rows.push({ qid: t.qid, text: t.text });
+      const q = qById[t.qid];
+      const w = q ? Math.max(...DATA.families[familyId].map((f) => (q.lr[f] && q.lr[f].yes) || 0)) : 0;
+      rows.push({ qid: t.qid, text: t.text, w });
     }
   }
-  const choice = {};   // qid -> 'has' | 'lacks'  (absent = skip)
+  rows.sort((a, b) => b.w - a.w);   // most-diagnostic first
+
+  // Progressive disclosure: a family with many tells reads as a "wall" (the neophyte re-audit). Lead
+  // with the few most-telling checks; fold the rest behind a toggle. Folded checks stay scored if the
+  // reader opens them, and an unanswered check is neutral either way — so this never changes a verdict.
+  const LEAD = 4;
+  const willFold = rows.length > 6;       // ≤6 isn't a wall; show all
+  const choice = {};   // qid -> 'has' | 'lacks' | 'na'  (absent = skip; all non-has/lacks are neutral)
 
   const card = el('section', { className: 'card' });
   if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
@@ -229,12 +241,11 @@ function renderChecklist(familyId) {
   card.append(el('p', { className: 'muted',
     textContent: 'Answer the ones you can. Many won’t apply to your example, and that’s normal — it won’t change the result.' }));
 
-  const list = el('div', { className: 'checklist' });
-  for (const r of rows) {
-    // Each choice carries its own always-visible label (under the icon), so the meaning of 👍/👎
-    // never hides on hover — the re-audit found the hover legend invisible on phones. A third
-    // choice, "doesn’t apply", lets a reader confidently clear a row that can’t apply to their
-    // one-liner. It maps to neutral (omitted from affirmed/denied), exactly like a skip.
+  // Build one question row. Each choice carries its own always-visible label (under the icon), so
+  // the meaning of 👍/👎 never hides on hover — the re-audit found the hover legend invisible on
+  // phones. A third choice, "doesn’t apply", lets a reader confidently clear a row that can’t apply
+  // to their one-liner; it maps to neutral (omitted from affirmed/denied), exactly like a skip.
+  const makeRow = (r) => {
     const mkChoice = (kind, icon, label, cls) => {
       const b = el('button', { className: `tri ${cls}` },
         el('span', { className: 'tri-icon', textContent: icon }),
@@ -246,18 +257,38 @@ function renderChecklist(familyId) {
     const has = mkChoice('has', '👍', 'yes', 'tri-has');
     const lacks = mkChoice('lacks', '👎', 'no', 'tri-lacks');
     const na = mkChoice('na', '—', 'doesn’t apply', 'tri-na');
-    const row = el('div', { className: 'check-row' },
-      el('span', { className: 'check-text', textContent: r.text }),
-      el('span', { className: 'tri-group' }, has, lacks, na),
-    );
     function refresh() {
       has.classList.toggle('on', choice[r.qid] === 'has');
       lacks.classList.toggle('on', choice[r.qid] === 'lacks');
       na.classList.toggle('on', choice[r.qid] === 'na');
     }
-    list.append(row);
-  }
+    return el('div', { className: 'check-row' },
+      el('span', { className: 'check-text', textContent: r.text }),
+      el('span', { className: 'tri-group' }, has, lacks, na),
+    );
+  };
+
+  const lead = willFold ? rows.slice(0, LEAD) : rows;
+  const folded = willFold ? rows.slice(LEAD) : [];
+
+  const list = el('div', { className: 'checklist' });
+  for (const r of lead) list.append(makeRow(r));
   card.append(list);
+
+  if (folded.length) {
+    const more = el('div', { className: 'checklist', hidden: true });
+    for (const r of folded) more.append(makeRow(r));
+    const toggle = el('button', { className: 'btn btn-quiet show-more',
+      textContent: `+ Show ${folded.length} more check${folded.length > 1 ? 's' : ''}` });
+    toggle.onclick = () => {
+      more.hidden = !more.hidden;
+      toggle.textContent = more.hidden
+        ? `+ Show ${folded.length} more check${folded.length > 1 ? 's' : ''}`
+        : '− Show fewer';
+    };
+    card.append(toggle);
+    card.append(more);
+  }
 
   const see = el('button', { className: 'btn btn-primary', textContent: 'See the result →' });
   see.onclick = () => {
