@@ -1,0 +1,47 @@
+<svg viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Steely, a friendly steel I-beam holding up an argument">
+  <!-- Steely: an anthropomorphic I-beam. It HOLDS UP a little argument bubble — it builds and
+       defends the strongest version, never knocks things down. Colors use the app's palette via
+       currentColor (set by CSS) + a soft accent. Calm, geometric, theme-aware. -->
+  <defs>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--accent, #5b6f5a)" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="var(--accent, #5b6f5a)" stop-opacity="0.78"/>
+    </linearGradient>
+  </defs>
+
+  <!-- the argument it's holding up, above its head -->
+  <g opacity="0.9">
+    <rect x="40" y="6" width="40" height="22" rx="6" fill="var(--accent-soft, #e7ede6)"
+          stroke="var(--accent, #5b6f5a)" stroke-width="1.5"/>
+    <path d="M55 28 l5 7 5-7 z" fill="var(--accent-soft, #e7ede6)" stroke="var(--accent, #5b6f5a)" stroke-width="1.5"/>
+    <line x1="47" y1="14" x2="73" y2="14" stroke="var(--accent, #5b6f5a)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <line x1="47" y1="20" x2="67" y2="20" stroke="var(--accent, #5b6f5a)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- arms from the shoulders (top flange) reaching up to hold the bubble aloft -->
+  <path d="M36 50 Q28 40 44 33" fill="none" stroke="url(#steel)" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M84 50 Q92 40 76 33" fill="none" stroke="url(#steel)" stroke-width="5.5" stroke-linecap="round"/>
+
+  <!-- the I-beam body: top flange, web, bottom flange -->
+  <rect x="30" y="44" width="60" height="12" rx="3" fill="url(#steel)"/>
+  <rect x="50" y="52" width="20" height="50" fill="url(#steel)"/>
+  <rect x="30" y="98" width="60" height="12" rx="3" fill="url(#steel)"/>
+
+  <!-- bolt rivets on the flanges (steel detail) -->
+  <g fill="var(--paper, #faf6ef)" opacity="0.85">
+    <circle cx="37" cy="50" r="2"/><circle cx="83" cy="50" r="2"/>
+    <circle cx="37" cy="104" r="2"/><circle cx="83" cy="104" r="2"/>
+  </g>
+
+  <!-- calm friendly face on the web -->
+  <g fill="var(--paper, #faf6ef)">
+    <circle cx="56" cy="68" r="3.4"/>
+    <circle cx="64" cy="68" r="3.4"/>
+  </g>
+  <!-- gentle smile -->
+  <path d="M55 78 Q60 83 65 78" fill="none" stroke="var(--paper, #faf6ef)" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- sturdy little feet -->
+  <rect x="34" y="110" width="14" height="6" rx="3" fill="url(#steel)"/>
+  <rect x="72" y="110" width="14" height="6" rx="3" fill="url(#steel)"/>
+</svg>

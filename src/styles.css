@@ -278,3 +278,32 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 @media (prefers-color-scheme: dark) {
   .tri-has.on, .tri-lacks.on { color: #15140f; }
 }
+
+/* ---------- mascot (Steely) — persistent host above the card ---------- */
+/* The p5 canvas mounts here and reacts to stage changes; the inline SVG fallback shows if p5 never
+   loads. Either way it sits centered above the card, themed by the page's CSS variables. */
+#mascot-canvas {
+  width: 96px;
+  margin: 0 auto -0.5rem;     /* slight overlap so it nestles onto the card */
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  position: relative;
+  z-index: 2;
+  animation: mascot-in .5s ease both;
+}
+#mascot-canvas canvas { display: block; width: 100% !important; height: auto !important; }
+#mascot-fallback { display: block; width: 84px; }
+#mascot-fallback svg { width: 100%; height: auto; display: block; }
+@keyframes mascot-in {
+  from { opacity: 0; transform: translateY(6px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+/* static-fallback gentle float (only when p5 isn't driving it; p5 handles its own motion) */
+@media (prefers-reduced-motion: no-preference) {
+  #mascot-fallback svg { animation: mascot-float 5s ease-in-out infinite; }
+}
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}

@@ -5,9 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Steelman — read an argument at its strongest before you judge it</title>
   <meta name="description" content="A goodwill-first thinking companion. Paste an argument, check what it does well, and find out whether there's really a fallacy — or whether it holds up. ('Steelman' is the opposite of strawman: engage the strongest version.)">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="src/styles.css">
 </head>
 <body>
+  <!-- Persistent mascot host: one long-lived canvas that reacts to stage changes (not re-created
+       per screen). The static SVG fallback inside shows until/unless p5 takes over. -->
+  <div id="mascot-canvas" aria-hidden="true">
+    <span id="mascot-fallback"><!-- ui.js injects the inline SVG here as a graceful fallback --></span>
+  </div>
   <main id="app" aria-live="polite">
     <!-- screens are rendered here by src/ui.js -->
     <noscript>
@@ -24,6 +30,13 @@
     <span class="dot">·</span>
     <a href="https://github.com/zntznt/steelman">source</a>
   </footer>
+  <!-- Steely mascot (p5) — fully optional. Loaded async; if the CDN or p5 fails, the app is
+       unaffected and the static SVG fallback (injected by ui.js) shows instead. defer keeps it
+       off the critical path. The onload event lets mascot.js start once p5 is present. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/p5.min.js"
+          onload="window.dispatchEvent(new Event('steely:p5ready'))"
+          onerror="console.warn('p5 CDN unavailable — Steely uses the static fallback.')"></script>
+  <script defer src="src/mascot.js"></script>
   <script type="module" src="src/ui.js"></script>
 </body>
 </html>

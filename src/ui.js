@@ -16,6 +16,7 @@ const el = (tag, props = {}, ...kids) => {
 
 let DATA = null;       // loaded bank (incl. families, familyMeta, familyCues, tells)
 let argument = '';     // the pasted argument, for reference + cue scan
+let MASCOT = '';       // inline SVG markup for Steely (themed via the page's CSS variables)
 
 // ---------- bootstrap ----------
 boot();
@@ -29,6 +30,12 @@ async function boot() {
     ]);
     DATA = loadData(fallacies, questions, null, families);
     if (DATA.warnings?.length) console.warn('validateBank warnings:', DATA.warnings);
+    // Static SVG fallback for the mascot, inlined (not <img>) so it themes via CSS vars. The p5
+    // canvas (src/mascot.js) overlays this when it loads; if p5 fails, this is what shows. Either
+    // way the app is unaffected. A failed fetch just means no mascot.
+    MASCOT = await fetch('src/mascot.svg', { cache: 'no-cache' }).then((r) => r.ok ? r.text() : '').catch(() => '');
+    const fb = document.getElementById('mascot-fallback');
+    if (fb && MASCOT) fb.innerHTML = MASCOT;
     renderStart();
   } catch (err) {
     renderLoadError(err);
@@ -53,6 +60,9 @@ async function fetchJSON(path) {
 
 const clear = () => app.replaceChildren();
 const familyName = (id) => DATA.familyMeta[id]?.name || id;
+// Tell the mascot what stage we're on. Best-effort: if Steely (p5) didn't load, this is a no-op
+// and the static SVG fallback simply stays put. The app never depends on it.
+const steelyStage = (name) => { try { window.steely?.setStage(name); } catch { /* ignore */ } };
 
 // ---------- 1. paste ----------
 function renderStart() {
@@ -62,6 +72,7 @@ function renderStart() {
     placeholder: 'e.g. "We can\'t trust her plan — she failed a class in college."',
     value: argument,
   });
+  steelyStage('input');
   const begin = el('button', { className: 'btn btn-primary', textContent: 'Think it through →' });
   const card = el('section', { className: 'card' },
     el('p', { className: 'kicker', textContent: 'Steelman' }),
@@ -91,6 +102,7 @@ function renderStart() {
 // ---------- 2. pick a bucket (2-level: bucket → family). Cue scan suggests, never decides. ----------
 function renderFamilyPick() {
   clear();
+  steelyStage('family');
   const famSuggestion = suggestFamily(DATA, argument).top;       // strongest single family (fast path)
   const bucketSuggestion = suggestBucket(DATA, argument).top;    // likely bucket
   const order = (DATA.buckets || []).map((b) => b.id);
@@ -154,6 +166,7 @@ function renderFamilyPick() {
 // ---------- 2b. pick a family within the chosen bucket ----------
 function renderBucketFamilies(bucket) {
   clear();
+  steelyStage('family');
   const bm = Object.fromEntries((DATA.buckets || []).map((b) => [b.id, b]));
   const famSuggestion = suggestFamily(DATA, argument).top;
   const fams = (DATA.bucketFamilies[bucket] || []);
@@ -189,6 +202,7 @@ function renderBucketFamilies(bucket) {
 // ---------- 3. the positive-first virtue checklist ----------
 function renderChecklist(familyId) {
   clear();
+  steelyStage('checklist');
   // Collect every tell for the family's fallacies, de-duplicated by question id (a question shared
   // across siblings appears once). Each row is a virtue the user marks ✓ / ✗ / skip.
   const seen = new Set();
@@ -243,6 +257,7 @@ function renderChecklist(familyId) {
 // ---------- 4. verdicts (tentative + teaching) ----------
 function renderVerdict(result, familyId) {
   clear();
+  steelyStage(result.kind);   // mascot maps accuse/lean → gap, valid → holds, cynic → skeptic
   switch (result.kind) {
     case 'accuse': return renderAccuse(result);
     case 'inconclusive_lean': return renderInconclusive(result);
@@ -267,8 +282,8 @@ function renderAccuse(result) {
     el('div', { className: 'answers' }, yes, no),
   );
   app.append(card);
-  yes.onclick = () => renderConfirmed(f);
-  no.onclick = () => renderCynic('rejected', f);
+  yes.onclick = () => { steelyStage('confirmed'); renderConfirmed(f); };
+  no.onclick = () => { steelyStage('cynic_after_reject'); renderCynic('rejected', f); };
 }
 
 function renderConfirmed(f) {
