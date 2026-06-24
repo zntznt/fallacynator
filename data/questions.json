@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "_comment": "User-facing checklist copy lives in data/families.json (tells[].text), rewritten as plain “Does it…?” questions for the live flow. The text fields here feed only the retired legacy sequential interview (regression tests). Engine keys on qid, never on text.",
   "questions": [
     {
       "id": "q_responds_to_claim_or_person",
