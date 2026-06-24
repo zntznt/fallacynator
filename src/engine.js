@@ -49,6 +49,12 @@ export const CONFIG = {
                                // max(1-denial) and min(2-denial) family-local f/VALID. The midpoint is
                                // the right gate. (Was 0.55 at the 13-fallacy/4-family scale.)
 
+  // Cue routing (suggestFamily/suggestBucket). Scores are specificity-weighted: a cue listed by N
+  // families is worth 1/N. Only suggest when the top family clears a real signal AND clearly beats
+  // the runner-up — better to show the full picker than to confidently misroute (panel M-1).
+  CUE_MIN_SCORE: 0.5,     // top weighted score must reach this to surface a suggestion
+  CUE_MIN_MARGIN: 1.3,    // ...and be ≥ this × the runner-up family's score
+
   // VALID exits
   TAU_VALID: 0.75,        // earned-VALID: confident "this holds up"
 
@@ -519,28 +525,59 @@ export function scoreChecklist(data, { familyId, affirmed = [], denied = [], see
   return { kind: 'inconclusive_lean', leanFallacy: top.fid, beliefs: P, state };
 }
 
-// Scan a pasted argument for family routing cues (plain case-insensitive substring match — no AI).
-// Returns families ranked by cue hits, for "suggest, don't decide" routing. data.familyCues is the
-// {familyId: [cue strings]} map loaded from data/families.json.
-export function suggestFamily(data, text) {
-  const hay = String(text || '').toLowerCase();
-  const scores = {};
-  for (const [fam, cues] of Object.entries(data.familyCues || {})) {
-    scores[fam] = (cues || []).reduce((n, cue) => n + (hay.includes(cue.toLowerCase()) ? 1 : 0), 0);
+// Cue inverse-document-frequency: a cue listed by N families is worth 1/N. Generic words like
+// "if"/"either" that several families claim get heavily discounted so they stop stealing arguments
+// (panel finding M-1: such cues were false attractors). Cached per data object.
+function cueWeights(data) {
+  if (data._cueWeights) return data._cueWeights;
+  const famCount = {};
+  for (const cues of Object.values(data.familyCues || {})) {
+    for (const c of (cues || [])) { const k = c.toLowerCase(); famCount[k] = (famCount[k] || 0) + 1; }
   }
-  const ranked = Object.entries(scores).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
-  return { top: ranked[0]?.[0] ?? null, scores };
+  const w = {};
+  for (const k in famCount) w[k] = 1 / famCount[k];
+  data._cueWeights = w;
+  return w;
 }
 
-// Suggest a BUCKET (top-level of the 2-level picker) by summing its families' cue hits. Lets the
-// picker pre-open the likely bucket while the user can still choose any. Returns {top, scores}.
+// Scan a pasted argument for family routing cues (plain case-insensitive substring match — no AI).
+// Scores each family by the SPECIFICITY-WEIGHTED sum of its matched cues (a cue shared by N families
+// counts 1/N). Only returns a suggestion when the top score clears CUE_MIN_SCORE *and* clearly beats
+// the runner-up (CUE_MIN_MARGIN) — otherwise null, and the UI just shows the full picker. Better to
+// suggest nothing than to confidently misroute (the panel showed wrong suggestions steer novices).
+export function suggestFamily(data, text) {
+  const hay = String(text || '').toLowerCase();
+  const w = cueWeights(data);
+  const scores = {}; const hits = {};
+  for (const [fam, cues] of Object.entries(data.familyCues || {})) {
+    let score = 0, n = 0;
+    for (const cue of (cues || [])) {
+      if (hay.includes(cue.toLowerCase())) { score += w[cue.toLowerCase()] || 0; n++; }
+    }
+    scores[fam] = score; hits[fam] = n;
+  }
+  const ranked = Object.entries(scores).filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]);
+  const top = ranked[0], second = ranked[1];
+  // confidence gate: enough signal, and a clear winner over the runner-up
+  const confident = top
+    && top[1] >= CONFIG.CUE_MIN_SCORE
+    && top[1] >= CONFIG.CUE_MIN_MARGIN * (second ? second[1] : 0);
+  return { top: confident ? top[0] : null, scores, hits };
+}
+
+// Suggest a BUCKET (top-level of the 2-level picker) by summing its families' specificity-weighted
+// cue scores. Same confidence gate. Returns {top, scores}.
 export function suggestBucket(data, text) {
   const { scores: famScores } = suggestFamily(data, text);
   const scores = {};
-  for (const [fam, n] of Object.entries(famScores)) {
+  for (const [fam, s] of Object.entries(famScores)) {
     const bucket = data.familyMeta[fam]?.bucket;
-    if (bucket) scores[bucket] = (scores[bucket] || 0) + n;
+    if (bucket) scores[bucket] = (scores[bucket] || 0) + s;
   }
-  const ranked = Object.entries(scores).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
-  return { top: ranked[0]?.[0] ?? null, scores };
+  const ranked = Object.entries(scores).filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]);
+  const top = ranked[0], second = ranked[1];
+  const confident = top
+    && top[1] >= CONFIG.CUE_MIN_SCORE
+    && top[1] >= CONFIG.CUE_MIN_MARGIN * (second ? second[1] : 0);
+  return { top: confident ? top[0] : null, scores };
 }

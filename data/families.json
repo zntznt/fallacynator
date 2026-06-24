@@ -6,23 +6,18 @@
       "name": "Against the person",
       "prompt": "It seems to answer the person or a reworded version of their point, more than the point itself",
       "cues": [
-        "you're just",
-        "you are just",
-        "she's a",
-        "he's a",
-        "they're just",
-        "hypocrite",
-        "hypocritical",
         "paid shill",
-        "shill",
-        "biased",
-        "what about you",
-        "you do it too",
-        "look who's talking",
-        "coming from someone",
-        "so-called",
-        "typical of",
-        "of course you'd say"
+        "so we can ignore",
+        "so we can dismiss",
+        "ignore her",
+        "ignore his",
+        "her analysis",
+        "worthless",
+        "funded by",
+        "known liar",
+        "so you are saying",
+        "so you're saying",
+        "you cheat on your"
       ],
       "bucket": "relevance"
     },
@@ -31,25 +26,16 @@
       "name": "Leans on something beside the evidence",
       "prompt": "It seems to lean on a feeling, a name, naturalness, or popularity more than on reasons",
       "cues": [
-        "natural",
+        "all natural",
         "all-natural",
-        "chemical",
-        "man-made",
-        "artificial",
-        "everyone knows",
-        "everybody",
-        "most people",
-        "we all",
-        "popular",
-        "experts say",
-        "scientists agree",
-        "doctors recommend",
-        "celebrity",
+        "so it is healthy",
+        "famous actor",
+        "endorses it",
+        "everyone is buying",
+        "so it must be good",
         "think of the",
-        "imagine how",
-        "for the children",
-        "heartless",
-        "how can you"
+        "suffering children",
+        "you must donate"
       ],
       "bucket": "appeals"
     },
@@ -58,24 +44,18 @@
       "name": "Leaps past the evidence",
       "prompt": "The conclusion seems to reach further than the evidence given carries it",
       "cues": [
-        "always",
-        "never",
-        "everyone i",
-        "every time",
-        "all of them",
-        "ever since",
-        "after that",
-        "right after",
-        "led to",
-        "caused by",
-        "will end up",
-        "next thing",
+        "if we allow this",
+        "will collapse",
         "slippery slope",
         "before you know it",
+        "whole country",
+        "everyone i",
         "in my experience",
-        "i once",
         "this one time",
-        "proves that"
+        "lived to",
+        "my grandfather",
+        "so smoking",
+        "before long"
       ],
       "bucket": "induction"
     },
@@ -84,18 +64,14 @@
       "name": "Assumes what it should establish",
       "prompt": "It seems to take its starting point for granted instead of supporting it",
       "cues": [
+        "because the book says so",
+        "the book is true",
+        "because it's true",
+        "assumes what",
+        "its own conclusion",
+        "begs the question",
         "by definition",
-        "obviously true",
-        "of course it's true",
-        "everyone agrees it's",
-        "can't imagine",
-        "cannot imagine",
-        "no way that",
-        "makes no sense that",
-        "must be false",
-        "has to be",
-        "it's just true",
-        "begs the question"
+        "it's just true"
       ],
       "bucket": "presumption"
     },
@@ -106,12 +82,11 @@
       "bucket": "relevance",
       "cues": [
         "what about",
-        "let's talk about",
+        "look over there",
+        "this other issue",
+        "beside the point",
+        "moving the goalpost",
         "the real issue is",
-        "speaking of",
-        "anyway",
-        "that's not the point",
-        "but you still haven't",
         "changing the subject"
       ]
     },
@@ -121,16 +96,13 @@
       "prompt": "It seems to move you by emotion rather than by reasons",
       "bucket": "appeals",
       "cues": [
-        "think of the",
         "imagine how",
         "for the children",
         "heartless",
-        "how can you",
         "terrifying",
         "devastating",
         "you should be ashamed",
-        "scary",
-        "disaster"
+        "scary"
       ]
     },
     {
@@ -139,20 +111,18 @@
       "prompt": "It seems to rest on authority, popularity, or novelty rather than evidence",
       "bucket": "appeals",
       "cues": [
-        "experts say",
-        "scientists agree",
-        "doctors recommend",
-        "celebrity",
-        "everyone knows",
-        "everybody",
-        "most people",
-        "natural",
-        "all-natural",
+        "because we always have",
+        "this way because",
         "the way it's always",
-        "tradition",
+        "newest model",
+        "the newest",
+        "old-fashioned",
         "brand new",
-        "latest",
-        "old-fashioned"
+        "doctors recommend",
+        "have always",
+        "always done it",
+        "always celebrated",
+        "the way it has always"
       ]
     },
     {
@@ -161,16 +131,18 @@
       "prompt": "It frames the options more narrowly than reality allows",
       "bucket": "presumption",
       "cues": [
-        "either",
-        "or else",
-        "only two",
+        "either we",
+        "or we accept",
+        "only two options",
         "the only option",
         "no other choice",
+        "no middle ground",
+        "you're with us or",
         "you can't have it both",
-        "same thing as",
-        "just as bad as",
-        "unless it's perfect",
-        "somewhere in between must be"
+        "we must choose",
+        "must choose",
+        "only option is",
+        "or let"
       ]
     },
     {
@@ -179,18 +151,13 @@
       "prompt": "Its support seems to already take the conclusion for granted",
       "bucket": "presumption",
       "cues": [
-        "by definition",
         "obviously true",
         "of course it's true",
         "everyone agrees it's",
-        "it's just true",
-        "begs the question",
         "can't imagine",
         "cannot imagine",
-        "no way that",
         "makes no sense that",
-        "must be false",
-        "have you stopped"
+        "no way that"
       ]
     },
     {
@@ -199,13 +166,17 @@
       "prompt": "It treats 'not disproven' as 'proven', or vice versa",
       "bucket": "presumption",
       "cues": [
-        "no evidence that",
+        "no one has proven",
+        "prove it doesn't",
+        "absence of evidence",
         "can't prove it isn't",
         "prove me wrong",
-        "nobody has shown",
-        "until you can show",
         "hasn't been disproven",
-        "no one has denied"
+        "no one has denied",
+        "nobody has shown",
+        "therefore they",
+        "therefore it exists",
+        "cannot be disproven"
       ]
     },
     {
@@ -214,16 +185,11 @@
       "prompt": "It draws a broad conclusion from thin or one-sided evidence",
       "bucket": "induction",
       "cues": [
-        "always",
-        "never",
-        "everyone i",
-        "every time",
-        "in my experience",
-        "i once",
-        "this one time",
-        "all of them",
+        "every single one",
+        "i once met",
         "they all",
-        "just look at"
+        "just look at",
+        "all of them are"
       ]
     },
     {
@@ -233,16 +199,12 @@
       "bucket": "induction",
       "cues": [
         "ever since",
-        "after that",
+        "so he caused",
         "right after",
-        "led to",
+        "caused it",
         "caused by",
-        "will end up",
-        "next thing",
-        "slippery slope",
-        "before you know it",
-        "because right before",
-        " once we allow"
+        "correlat",
+        "because right before"
       ]
     },
     {
@@ -265,12 +227,13 @@
       "prompt": "A key word seems to shift meaning, or the phrasing is doing the work",
       "bucket": "language",
       "cues": [
-        "depends what you mean",
-        "in a sense",
-        "technically",
-        "real ",
-        "true ",
-        "by 'free' i mean"
+        "means riverbank",
+        "and also money",
+        "two meanings",
+        "plays on the word",
+        "equivocat",
+        "in one sense",
+        "depends what you mean"
       ]
     },
     {
@@ -279,12 +242,18 @@
       "prompt": "It assumes the parts and the whole must share a trait",
       "bucket": "language",
       "cues": [
-        "each part",
+        "every player",
+        "so the team",
+        "the team is great",
         "every member",
-        "the whole team",
-        "so the group",
-        "made of",
-        "therefore the team"
+        "each part",
+        "so the whole",
+        "the team must be",
+        "each brick",
+        "therefore the wall",
+        "so the wall",
+        "each one is",
+        "so all of them"
       ]
     },
     {
@@ -293,12 +262,11 @@
       "prompt": "It draws the wrong move from an if-then",
       "bucket": "logic",
       "cues": [
-        "if ",
-        "then ",
-        "must have",
-        "so it must",
-        "only if",
-        "unless"
+        "so they danced",
+        "; so they",
+        "it rained; so",
+        "affirming the consequent",
+        "denying the antecedent"
       ]
     },
     {
@@ -307,14 +275,17 @@
       "prompt": "It draws a shaky conclusion from statistics or probability",
       "bucket": "logic",
       "cues": [
-        "probability",
-        "chance",
-        "odds",
+        "is due",
         "due for",
-        "average",
-        "percent",
-        "most ",
-        "rate of"
+        "in a row",
+        "at his worst",
+        "improved after",
+        "successful founders",
+        "dropped out",
+        "the test is",
+        "rare disease",
+        "regress",
+        "only the winners"
       ]
     },
     {
@@ -323,10 +294,11 @@
       "prompt": "It answers something adjacent to, but not, the actual claim",
       "bucket": "relevance",
       "cues": [
-        "if that were true",
-        "you only say that",
-        "they did it too",
-        "that would mean"
+        "you only say that because",
+        "stand to profit",
+        "two wrongs",
+        "that would mean",
+        "if that were true"
       ]
     },
     {
@@ -335,10 +307,10 @@
       "prompt": "It smuggles in an assumption the argument needed to earn",
       "bucket": "presumption",
       "cues": [
-        "real ",
-        "true ",
-        "any real",
         "have you stopped",
+        "no real fan",
+        "not a real",
+        "no true",
         "why is it that you"
       ]
     },
@@ -348,12 +320,12 @@
       "prompt": "It rests on a source of pull that does not bear on truth",
       "bucket": "appeals",
       "cues": [
-        "or else",
+        "you will regret",
+        "do not comply",
+        "or you'll regret",
         "smart people like you",
-        "rich ",
-        "successful people",
-        "common sense",
-        "you know better"
+        "rich people",
+        "common sense"
       ]
     },
     {
@@ -364,9 +336,11 @@
       "cues": [
         "some say",
         "many believe",
-        "arguably",
         "where do you draw the line",
-        "at what point"
+        "no real difference",
+        "the market wants",
+        "market wants",
+        "arguably"
       ]
     }
   ],

@@ -224,7 +224,7 @@ ok('authored tells: denying any fallacy’s first two tells accuses it');
   const cases = [
     ['She is a paid shill so we can ignore her analysis.', 'against_the_person'],
     ['It is all-natural with no chemicals, so it must be safe.', 'irrelevant_appeal'],
-    ['Ever since they changed the rule, crime went up, so the rule caused it.', 'weak_induction'],
+    ['Ever since they changed the rule, crime went up, so the rule caused it.', 'causal'],   // post hoc lives in the causal family — M-1 cue overhaul routes here (more correct)
     ['Either we ban it entirely or we accept total chaos.', 'false_choices'],   // C-2: routes to the family that holds false_dilemma
     ['The bridge holds 40 tons because the load tests and engineering report confirm it.', null],
   ];
