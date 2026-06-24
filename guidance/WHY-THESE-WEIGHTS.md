@@ -149,6 +149,30 @@ when correlation-damping (`EVIDENCE_DAMP`) was below 1.0; it's documented in `CO
 
 ---
 
+## "Doesn't this make ties common?"
+
+A fair worry: if many fallacies share the same canonical weights, won't lots of cases end with two
+fallacies equally probable? Measured against the live catalog, the answer is **no for the clean case,
+and a designed-for outcome in the messy one:**
+
+- **Within a family, tells don't overlap.** Each sibling fallacy owns its *own* distinct questions
+  (checked: zero shared tells in the families surveyed). So when a user denies one fallacy's tells,
+  only that fallacy's isolated score moves — it wins cleanly. Denying any fallacy's own two tells and
+  asking "does it dominate its family runner-up by 2.5×?" → **73 / 73 clean wins.** No tie.
+
+- **When the argument genuinely spans two fallacies, the engine refuses to guess.** If a user denies
+  a tell of fallacy A *and* a tell of fallacy B, neither clears the runner-up gate, so the verdict is
+  **`inconclusive_lean`** — "might be B, but not enough to be sure," naming the leader without
+  accusing. A real tie produces an honest non-committal answer, not a coin-flip. That's the goodwill
+  thesis applied to the app itself: epistemic humility when the evidence is ambiguous.
+
+- **The one genuine failure — two fallacies tied at the 4.5 owner tier on the same question — does
+  not exist today** (every strong-tier question has a single clear owner) and is now caught at load
+  time by a **G8b warning** in `validateBank`, so it can't silently creep in as fallacies are added.
+
+So ties aren't a flaw the system stumbles into — the only "tie" that reaches the user is the
+*legitimate* one (a genuinely ambiguous argument), and it has its own correct verdict.
+
 ## One-paragraph version
 
 > The weights aren't tuned per fallacy. There's a small vocabulary — 4.5 for a fallacy's own

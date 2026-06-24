@@ -213,6 +213,22 @@ export function validateBank(fallaciesJSON, questionsJSON, C = CONFIG) {
       }
     }
 
+    // G8b (warn): distinctiveness. If two fallacies tie for the TOP "yes" weight on a question at the
+    // strong tier (≥ 4.0), the engine can't tell them apart from this question — denying it splits
+    // evidence and the runner-up gate may never clear, yielding "not sure" where a name was wanted.
+    // Not a hard error: the engine degrades to an honest lean (never a false accusation), and an
+    // author may legitimately share a strong signal and rely on OTHER tells to separate the pair.
+    // Surface it so they can give one fallacy a distinctive tell. (See guidance/WHY-THESE-WEIGHTS.md.)
+    if (fallacyKeys.length >= 2) {
+      const top = Math.max(...fallacyKeys.map((k) => lr[k].yes));
+      if (top >= 4.0) {
+        const tied = fallacyKeys.filter((k) => lr[k].yes === top);
+        if (tied.length >= 2) {
+          warns.push(`G8b: question ${q.id} — ${tied.join(' & ')} tie at the top yes-weight ${top}; they’ll be hard to tell apart here. Give one a more distinctive tell.`);
+        }
+      }
+    }
+
     // G3 + G4 on derived rows
     const H = ['VALID', ...fallacies.map((f) => f.id)];
     const cat = buildCategoricals(lr, H, C);
