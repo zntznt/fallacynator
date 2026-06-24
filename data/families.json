@@ -84,11 +84,6 @@
       "name": "Assumes what it should establish",
       "prompt": "It seems to take its starting point for granted instead of supporting it",
       "cues": [
-        "either",
-        "or else",
-        "only two",
-        "the only option",
-        "no other",
         "by definition",
         "obviously true",
         "of course it's true",

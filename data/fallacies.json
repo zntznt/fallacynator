@@ -23,7 +23,7 @@
       "id": "false_dilemma",
       "name": "False Dilemma",
       "base_rate": 1.1,
-      "family": "presumption",
+      "family": "false_choices",
       "short": "Framing an issue as only two options when other choices or a middle ground also exist.",
       "teaching": "A false dilemma presents just two paths as if they were the only ones, when more options or a middle ground are actually available. Some choices really are binary, so it is only the fallacy when realistic alternatives have been left out rather than honestly ruled out.",
       "confirm_check": "Are realistic options or a middle ground being left out, so the choice is framed as just two when more genuinely exist?"
