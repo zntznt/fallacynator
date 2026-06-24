@@ -292,18 +292,59 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   z-index: 2;
   animation: mascot-in .5s ease both;
 }
-#mascot-canvas canvas { display: block; width: 100% !important; height: auto !important; }
 #mascot-fallback { display: block; width: 84px; }
-#mascot-fallback svg { width: 100%; height: auto; display: block; }
+#mascot-fallback svg, .steely { width: 84px; height: auto; display: block; }
 @keyframes mascot-in {
   from { opacity: 0; transform: translateY(6px) scale(.96); }
   to   { opacity: 1; transform: none; }
 }
-/* static-fallback gentle float (only when p5 isn't driving it; p5 handles its own motion) */
+
+/* ---------- live SVG mascot (Steely) ---------- */
+.steely { overflow: visible; }
+/* the rig leans/tilts as a whole; transition makes lean changes smooth */
+.steely .steely-rig { transform-origin: 60px 96px; transition: transform .4s ease; }
+
+/* body in warm steel grey; face/accents in paper + sage */
+.steely .st-flange, .steely .st-web { fill: #909696; }
+.steely .st-notch { fill: var(--paper); }
+.steely .st-rivet { fill: #7d8484; }
+.steely .st-eye { fill: var(--paper); transition: r .35s ease, cx .35s ease, cy .35s ease; }
+.steely .st-cres { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; opacity: 0; }
+/* swap dots ⇄ crescents */
+.steely .st-eyes[data-crescent="1"] .st-eye { opacity: 0; }
+.steely .st-eyes[data-crescent="1"] .st-cres { opacity: 1; }
+.steely .st-brow { stroke: var(--paper); stroke-width: 1.8; stroke-linecap: round; transition: d .35s ease, opacity .3s ease; }
+.steely .st-mouth { fill: none; stroke: var(--paper); stroke-width: 2.2; stroke-linecap: round; transition: d .35s ease; }
+.steely .st-arm { fill: none; stroke: #909696; stroke-width: 2.4; stroke-linecap: round; transition: d .4s ease; }
+.steely .st-hand { fill: #909696; transition: cx .4s ease, cy .4s ease; }
+
+/* bubble */
+.steely .st-bub-box { fill: none; stroke: var(--accent); stroke-width: 1.6; transition: opacity .3s ease; }
+.steely .st-bub-tail { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+.steely .st-bub-l1, .steely .st-bub-l2 { stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; opacity: .5; transition: opacity .3s ease; }
+.steely .st-bub-q { fill: var(--accent); font: 700 11px ui-sans-serif, system-ui, sans-serif; opacity: 0; transition: opacity .3s ease; }
+.steely .st-bub-mark { fill: #c98a3c; opacity: 0; transition: opacity .3s ease; }
+.steely .st-glow { fill: var(--accent); opacity: 0; }
+
+/* bubble states (set by the svg class) */
+.steely.bubble-empty .st-bub-box { stroke-dasharray: 2.5 2.5; }
+.steely.bubble-empty .st-bub-l1, .steely.bubble-empty .st-bub-l2 { opacity: 0; }
+.steely.bubble-q .st-bub-q { opacity: 1; }
+.steely.bubble-q .st-bub-l1, .steely.bubble-q .st-bub-l2 { opacity: 0; }
+.steely.bubble-mark .st-bub-mark { opacity: 1; }
+.steely.bubble-glow .st-glow { opacity: .16; }
+
+/* gentle motion — calm, and the whole thing respects reduced-motion (no animations there) */
 @media (prefers-reduced-motion: no-preference) {
-  #mascot-fallback svg { animation: mascot-float 5s ease-in-out infinite; }
+  .steely { animation: mascot-float 2.8s ease-in-out infinite; }
+  .steely.stage-holds { animation: mascot-float 2.2s ease-in-out infinite; }
+  .steely.stage-gap { animation: mascot-float 3.4s ease-in-out infinite; }   /* slower = calmer = care */
+  .steely.bubble-empty .st-bub-box { animation: bub-pulse 2s ease-in-out infinite; }
+  .steely.bubble-mark .st-bub-mark { animation: mark-pulse 1.5s ease-in-out infinite; }
+  .steely.bubble-glow .st-glow { animation: glow-pulse 2.4s ease-in-out infinite; }
+  #mascot-fallback svg { animation: mascot-float 2.8s ease-in-out infinite; }
 }
-@keyframes mascot-float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-3px); }
-}
+@keyframes mascot-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes bub-pulse  { 0%,100% { opacity: .45; } 50% { opacity: .75; } }
+@keyframes mark-pulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes glow-pulse { 0%,100% { opacity: .12; } 50% { opacity: .22; } }

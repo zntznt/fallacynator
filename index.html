@@ -30,12 +30,8 @@
     <span class="dot">·</span>
     <a href="https://github.com/zntznt/steelman">source</a>
   </footer>
-  <!-- Steely mascot (p5) — fully optional. Loaded async; if the CDN or p5 fails, the app is
-       unaffected and the static SVG fallback (injected by ui.js) shows instead. defer keeps it
-       off the critical path. The onload event lets mascot.js start once p5 is present. -->
-  <script defer src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/p5.min.js"
-          onload="window.dispatchEvent(new Event('steely:p5ready'))"
-          onerror="console.warn('p5 CDN unavailable — Steely uses the static fallback.')"></script>
+  <!-- Steely mascot — dependency-free animated SVG (no CDN, works offline). If it ever fails to
+       start, the static SVG fallback (injected by ui.js) simply remains. -->
   <script defer src="src/mascot.js"></script>
   <script type="module" src="src/ui.js"></script>
 </body>
