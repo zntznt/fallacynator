@@ -9,8 +9,15 @@ import { loadData, scoreChecklist, suggestFamily, suggestBucket } from './engine
 
 const app = document.getElementById('app');
 const el = (tag, props = {}, ...kids) => {
-  const n = Object.assign(document.createElement(tag), props);
-  for (const k of kids) n.append(k);
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    // aria-*, role, and data-* aren't reflected DOM properties, so Object.assign would silently lose
+    // them; route those through setAttribute. Everything else (className, textContent, onclick, …) is
+    // a real property and gets assigned directly.
+    if (k === 'role' || k.startsWith('aria-') || k.startsWith('data-')) n.setAttribute(k, v);
+    else n[k] = v;
+  }
+  for (const c of kids) n.append(c);
   return n;
 };
 
@@ -54,6 +61,17 @@ async function fetchJSON(path) {
 }
 
 const clear = () => app.replaceChildren();
+// Mount a screen and move focus to its heading. For user-initiated screen swaps this is the correct
+// a11y pattern (better than aria-live announcing the whole card): it tells a screen reader where it
+// now is and drops a keyboard user at the top of the new content instead of back on <body>.
+function mount(card) {
+  app.replaceChildren(card);
+  const heading = card.querySelector('h1, h2, .verdict-title');
+  if (heading) {
+    if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+    heading.focus({ preventScroll: false });
+  }
+}
 const familyName = (id) => DATA.familyMeta[id]?.name || id;
 // "a" / "an" so we never say "a Ad Hominem" — 27 of the fallacy names start with a vowel sound.
 // ponytail: vowel-letter test, not phonetic; none of the names start with a silent-h or "eu-/u-as-you" word, so it holds.
@@ -66,25 +84,30 @@ const steelyStage = (name) => { try { window.steely?.setStage(name); } catch { /
 // or push the controls off-screen: clamp it to a few lines with a soft fade, and let the reader
 // click to expand the whole thing. Long unbroken tokens (URLs) wrap rather than overflow sideways.
 const recallBlock = (text) => {
+  // The pasted argument stays a real <blockquote> (a quotation, not a button — making it a button
+  // would turn the whole argument into the control's accessible name). When it's long enough to
+  // clamp, we add a separate, properly labeled expand button beneath it.
+  const wrap = el('div');
+  const bq = el('blockquote', { className: 'recall clamped', textContent: text });
+  wrap.append(bq);
   // Start clamped, then measure: the 3-line cap is what creates the overflow we're testing for, so
   // it must be applied before scrollHeight is read (an unclamped block has no overflow to detect).
-  const bq = el('blockquote', { className: 'recall clamped', textContent: text });
   requestAnimationFrame(() => {
     if (bq.scrollHeight - bq.clientHeight <= 4) {
       bq.classList.remove('clamped');   // short paste: no clamp, no toggle needed
       return;
     }
-    const toggle = () => bq.setAttribute('aria-expanded', String(bq.classList.toggle('open')));
-    bq.setAttribute('role', 'button');
-    bq.setAttribute('tabindex', '0');
-    bq.setAttribute('aria-expanded', 'false');
-    bq.title = 'Click to show the whole thing';
-    bq.addEventListener('click', toggle);
-    bq.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
-    });
+    const btn = el('button', { className: 'btn btn-quiet recall-toggle', type: 'button',
+      textContent: 'Show full argument' });
+    btn.setAttribute('aria-expanded', 'false');
+    btn.onclick = () => {
+      const open = bq.classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = open ? 'Show less' : 'Show full argument';
+    };
+    wrap.append(btn);
   });
-  return bq;
+  return wrap;
 };
 
 // ---------- 1. paste ----------
@@ -96,14 +119,14 @@ function renderStart() {
     value: argument,
   });
   steelyStage('input');
-  const begin = el('button', { className: 'btn btn-primary', textContent: 'Start →' });
+  const begin = el('button', { className: 'btn btn-primary', textContent: 'Start →', 'aria-label': 'Start' });
   // The re-audit found three regressions here: "best version of it" read as a promise to rewrite
   // the user's text; the goodwill was piled on so thick it read as preachy; "argument" was heard as
   // "a fight". Fix: one plain promise (not three nudges), a gloss on "argument", concrete actions,
   // and "type or paste" / "stays on your phone" for phone-first users.
   const card = el('section', { className: 'card' },
     el('p', { className: 'kicker', textContent: 'Steelman' }),
-    el('h1', { textContent: 'Is something really wrong with this argument, or am I just being doubtful?' }),
+    el('h1', { className: 'hero', textContent: 'Is something really wrong with this argument, or am I just being doubtful?' }),
     el('p', {
       className: 'lede',
       textContent:
@@ -113,12 +136,30 @@ function renderStart() {
     ta,
     el('div', { className: 'row end' }, begin),
   );
-  app.append(card);
+  // Empty-paste error: a real, announced message, not just a silent color outline.
+  const err = el('p', { id: 'arg-err', className: 'error', role: 'alert', hidden: true,
+    textContent: 'Add an argument first, then Start.' });
+  card.insertBefore(err, card.querySelector('.row.end'));
+  const clearErr = () => {
+    err.hidden = true;
+    ta.removeAttribute('aria-invalid');
+    ta.style.outline = '';
+  };
+  ta.addEventListener('input', clearErr);
+
+  mount(card);
   ta.focus();
 
   begin.onclick = () => {
     argument = ta.value.trim();
-    if (!argument) { ta.focus(); ta.style.outline = '2px solid var(--suspect)'; return; }
+    if (!argument) {
+      err.hidden = false;
+      ta.setAttribute('aria-invalid', 'true');
+      ta.setAttribute('aria-describedby', 'arg-err');
+      ta.style.outline = '2px solid var(--suspect)';
+      ta.focus();
+      return;
+    }
     renderFamilyPick();
   };
 }
@@ -137,7 +178,7 @@ function renderFamilyPick() {
   const card = el('section', { className: 'card' });
   if (argument) card.append(recallBlock(argument));
   card.append(el('p', { className: 'kicker', textContent: 'Where to look' }));
-  card.append(el('h2', { textContent: 'What feels wrong about it, if anything?' }));
+  card.append(el('h1', { textContent: 'What feels wrong about it, if anything?' }));
   card.append(el('p', { className: 'muted',
     textContent: bucketSuggestion
       ? 'Here’s a place to start, but trust your own read. Pick the closest one, then we’ll narrow it.'
@@ -181,10 +222,10 @@ function renderFamilyPick() {
   card.append(opts);
 
   card.append(el('div', { className: 'row between' },
-    el('button', { className: 'btn', textContent: '↺ Start over', onclick: () => { argument = ''; renderStart(); } }),
+    el('button', { className: 'btn', textContent: '↺ Start over', 'aria-label': 'Start over', onclick: () => { argument = ''; renderStart(); } }),
     el('span', { className: 'muted', textContent: 'We start by trusting the argument, then look for any real problem.' }),
   ));
-  app.append(card);
+  mount(card);
 }
 
 // ---------- 2b. pick a family within the chosen bucket ----------
@@ -198,7 +239,7 @@ function renderBucketFamilies(bucket) {
   const card = el('section', { className: 'card' });
   if (argument) card.append(recallBlock(argument));
   card.append(el('p', { className: 'kicker', textContent: bm[bucket]?.name || 'Narrow it down' }));
-  card.append(el('h2', { textContent: 'Which fits best?' }));
+  card.append(el('h1', { textContent: 'Which fits best?' }));
 
   const opts = el('div', { className: 'family-list' });
   // suggested family first if it's in this bucket
@@ -217,10 +258,10 @@ function renderBucketFamilies(bucket) {
   card.append(opts);
 
   card.append(el('div', { className: 'row between' },
-    el('button', { className: 'btn', textContent: '← Back', onclick: renderFamilyPick }),
+    el('button', { className: 'btn', textContent: '← Back', 'aria-label': 'Back', onclick: renderFamilyPick }),
     el('span', { className: 'muted', textContent: 'Not sure? Back up and try a different kind.' }),
   ));
-  app.append(card);
+  mount(card);
 }
 
 // ---------- 3. the positive-first virtue checklist ----------
@@ -255,7 +296,7 @@ function renderChecklist(familyId) {
   const card = el('section', { className: 'card' });
   if (argument) card.append(recallBlock(argument));
   card.append(el('p', { className: 'kicker', textContent: familyName(familyId) }));
-  card.append(el('h2', { textContent: 'For each one, does the argument do this?' }));
+  card.append(el('h1', { textContent: 'For each one, does the argument do this?' }));
   // We start out trusting the argument. Two short sentences, no em-dashes (the re-audit found slow
   // and ESL readers lose the thread at " — "). The reassurance answers the panel's "skip-fear".
   card.append(el('p', { className: 'muted',
@@ -267,10 +308,15 @@ function renderChecklist(familyId) {
   // to their one-liner; it maps to neutral (omitted from affirmed/denied), exactly like a skip.
   const makeRow = (r) => {
     const mkChoice = (kind, icon, label, cls) => {
-      const b = el('button', { className: `tri ${cls}` },
+      const b = el('button', { className: `tri ${cls}`, type: 'button' },
         el('span', { className: 'tri-icon', textContent: icon }),
         el('span', { className: 'tri-label', textContent: label }),
       );
+      // The emoji + short label don't say WHICH question this answers, so name the button fully for
+      // screen readers, hide the decorative emoji, and expose the chosen state (aria-pressed).
+      b.querySelector('.tri-icon').setAttribute('aria-hidden', 'true');
+      b.setAttribute('aria-label', `${label}: ${r.text}`);
+      b.setAttribute('aria-pressed', 'false');
       b.onclick = () => { choice[r.qid] = choice[r.qid] === kind ? undefined : kind; refresh(); };
       return b;
     };
@@ -278,9 +324,11 @@ function renderChecklist(familyId) {
     const lacks = mkChoice('lacks', '👎', 'no', 'tri-lacks');
     const na = mkChoice('na', '🤷', 'doesn’t apply', 'tri-na');
     function refresh() {
-      has.classList.toggle('on', choice[r.qid] === 'has');
-      lacks.classList.toggle('on', choice[r.qid] === 'lacks');
-      na.classList.toggle('on', choice[r.qid] === 'na');
+      for (const [b, k] of [[has, 'has'], [lacks, 'lacks'], [na, 'na']]) {
+        const on = choice[r.qid] === k;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+      }
     }
     return el('div', { className: 'check-row' },
       el('span', { className: 'check-text', textContent: r.text }),
@@ -310,7 +358,7 @@ function renderChecklist(familyId) {
     card.append(more);
   }
 
-  const see = el('button', { className: 'btn btn-primary', textContent: 'See the result →' });
+  const see = el('button', { className: 'btn btn-primary', textContent: 'See the result →', 'aria-label': 'See the result' });
   see.onclick = () => {
     // 'na' (doesn’t apply) and skip are both neutral — only 👍/👎 feed the engine.
     const affirmed = Object.keys(choice).filter((q) => choice[q] === 'has');
@@ -318,10 +366,10 @@ function renderChecklist(familyId) {
     renderVerdict(scoreChecklist(DATA, { familyId, affirmed, denied }), familyId);
   };
   card.append(el('div', { className: 'row between' },
-    el('button', { className: 'btn', textContent: '← Pick a different focus', onclick: renderFamilyPick }),
+    el('button', { className: 'btn', textContent: '← Pick a different focus', 'aria-label': 'Pick a different focus', onclick: renderFamilyPick }),
     see,
   ));
-  app.append(card);
+  mount(card);
 }
 
 // ---------- 4. verdicts (tentative + teaching) ----------
@@ -343,7 +391,7 @@ function renderAccuse(result) {
   const no = el('button', { className: 'btn', textContent: 'No, that’s not it' });
   const card = el('section', { className: 'card verdict-accuse' },
     el('p', { className: 'kicker', textContent: 'One thing to check' }),
-    el('p', { className: 'verdict-title', textContent: `There may be a weak spot here. It looks like ${f.name}.` }),
+    el('h1', { className: 'verdict-title', textContent: `There may be a weak spot here. It looks like ${f.name}.` }),
     el('p', { className: 'muted', textContent: 'That’s just what we noticed. You’re the judge. Here’s what it means:' }),
     el('div', { className: 'teaching' },
       el('span', { className: 'name', textContent: f.name + '. ' }),
@@ -355,16 +403,16 @@ function renderAccuse(result) {
     ),
     el('div', { className: 'answers' }, yes, no),
   );
-  app.append(card);
+  mount(card);
   yes.onclick = () => { steelyStage('confirmed'); renderConfirmed(f); };
   no.onclick = () => { steelyStage('cynic_after_reject'); renderCynic('rejected', f); };
 }
 
 function renderConfirmed(f) {
   clear();
-  app.append(el('section', { className: 'card verdict-accuse' },
+  mount(el('section', { className: 'card verdict-accuse' },
     el('p', { className: 'kicker', textContent: 'You made the call' }),
-    el('p', { className: 'verdict-title', textContent: `Looks like ${article(f.name)} ${f.name}.` }),
+    el('h1', { className: 'verdict-title', textContent: `Looks like ${article(f.name)} ${f.name}.` }),
     el('p', { textContent:
       'You confirmed it. The argument depends on this instead of standing on its own. ' +
       'Naming it isn’t a way to “win,” though. The real point underneath might still be worth ' +
@@ -380,9 +428,9 @@ function renderInconclusive(result) {
   const lean = f
     ? `There might be something here, maybe ${article(f.name)} ${f.name}, but not enough to be sure.`
     : 'There might be something here, but not enough to be sure.';
-  app.append(el('section', { className: 'card verdict-cynic' },
+  mount(el('section', { className: 'card verdict-cynic' },
     el('p', { className: 'kicker', textContent: 'The result' }),
-    el('p', { className: 'verdict-title', textContent: 'Not enough to be sure, and that’s fine.' }),
+    el('h1', { className: 'verdict-title', textContent: 'Not enough to be sure, and that’s fine.' }),
     el('p', { textContent: lean + ' We’d rather say “not sure” than pin a label on an argument that might be fine.' }),
     el('p', { className: 'muted', textContent: 'Trust your own read. If it still feels wrong, the fair move is to ask the other person to explain their reasoning.' }),
     restartRow(),
@@ -412,9 +460,9 @@ function renderValid(mode) {
     },
   };
   const c = COPY[mode] || COPY.checked;
-  app.append(el('section', { className: 'card verdict-valid' },
+  mount(el('section', { className: 'card verdict-valid' },
     el('p', { className: 'kicker', textContent: 'The verdict' }),
-    el('p', { className: 'verdict-title', textContent: c.title }),
+    el('h1', { className: 'verdict-title', textContent: c.title }),
     el('p', { textContent: c.body }),
     el('p', { className: 'muted', textContent: c.muted }),
     restartRow(),
@@ -430,9 +478,9 @@ function renderCynic(why, rejectedFallacy) {
     ? `You looked at whether it was ${rejectedFallacy.name} and decided it didn’t fit. ` +
       `We won’t reach for a second-best label. The reasoning seems to hold, and checking it was the right move.`
     : 'We couldn’t find a clear problem here. The reasoning seems to hold up.';
-  app.append(el('section', { className: 'card verdict-cynic' },
+  mount(el('section', { className: 'card verdict-cynic' },
     el('p', { className: 'kicker', textContent: 'The result' }),
-    el('p', { className: 'verdict-title', textContent: 'No clear problem. It seems to hold up.' }),
+    el('h1', { className: 'verdict-title', textContent: 'No clear problem. It seems to hold up.' }),
     el('p', { textContent: body }),
     el('p', { className: 'muted', textContent: 'Checking was worth doing. Nothing here needs you to back down.' }),
     restartRow(),
@@ -448,9 +496,9 @@ function restartRow() {
 
 function renderLoadError(err) {
   clear();
-  app.append(el('section', { className: 'card' },
+  mount(el('section', { className: 'card' },
     el('p', { className: 'kicker', textContent: 'Couldn’t start' }),
-    el('h1', { textContent: 'Steelman' }),
+    el('h1', { className: 'hero', textContent: 'Steelman' }),
     el('p', { className: 'error', textContent: err.message || String(err) }),
   ));
 }

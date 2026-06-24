@@ -6,7 +6,8 @@
   --paper: #faf6ef;
   --ink: #2e2a24;
   --ink-soft: #6b6157;
-  --line: #e6ddcf;
+  --line: #e6ddcf;          /* decorative separators */
+  --line-strong: #94886f;   /* control borders — ≥3:1 vs card/paper (WCAG 1.4.11) */
   --card: #fffdf9;
   --accent: #5b6f5a;       /* muted sage — calm, not alarming */
   --accent-soft: #e7ede6;
@@ -23,6 +24,7 @@
     --ink: #ece5da;
     --ink-soft: #a89e90;
     --line: #322e28;
+    --line-strong: #736a5c;   /* control borders — ≥3:1 in dark */
     --card: #24211d;
     --accent: #8aa089;
     --accent-soft: #2b322a;
@@ -42,7 +44,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;   /* center via #app margin-block:auto instead, so a tall card can't
+                                    overflow above the viewport top and become unscrollable */
+  overflow-y: auto;
   gap: 1.5rem;
   padding: 2rem 1.25rem 1rem;
   background: var(--paper);
@@ -57,7 +61,7 @@ h1, h2, .verdict-title {
   letter-spacing: -0.01em;
 }
 
-#app { width: 100%; max-width: var(--maxw); }
+#app { width: 100%; max-width: var(--maxw); margin-block: auto; }   /* centers when there's room, never clips a tall card */
 
 /* one card at a time, gently fading in */
 .card {
@@ -74,6 +78,8 @@ h1, h2, .verdict-title {
 }
 @media (prefers-reduced-motion: reduce) {
   .card { animation: none; }
+  .btn, .tri, .family-opt { transition: none; }
+  .btn:active, .tri:hover, .family-opt:active { transform: none; }
 }
 
 .kicker {
@@ -84,8 +90,11 @@ h1, h2, .verdict-title {
   margin: 0 0 .5rem;
 }
 
-.card h1 { font-size: 1.8rem; margin: 0 0 .5rem; }
-.card h2 { font-size: 1.4rem; margin: 0 0 1rem; }
+/* Every screen's primary line is an h1 (one heading per screen, proper hierarchy). The Start hero
+   reads largest; interior question heads and verdict lines share one slightly smaller serif size. */
+.card h1 { font-size: 1.55rem; margin: 0 0 1rem; }
+.card h1.hero { font-size: 1.8rem; margin: 0 0 .5rem; }
+.card h1:focus { outline: none; }   /* programmatic focus target; the visible cue is the heading itself */
 .lede { color: var(--ink-soft); margin: 0 0 1.5rem; }
 
 textarea {
@@ -93,7 +102,7 @@ textarea {
   min-height: 9rem;
   resize: vertical;
   padding: .9rem 1rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 12px;
   background: var(--paper);
   color: var(--ink);
@@ -106,7 +115,7 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .btn {
   font: inherit;
   cursor: pointer;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   background: var(--card);
   color: var(--ink);
   border-radius: 999px;
@@ -125,7 +134,14 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   font-size: .92rem;
 }
 .btn-quiet:hover { background: none; text-decoration: underline; }
-.show-more { display: block; margin: .35rem 0 .25rem; }
+.show-more {
+  display: block;
+  width: 100%;
+  min-height: 44px;          /* real tap target, not body-text-sized */
+  margin: .35rem 0 .25rem;
+  text-align: center;
+  text-decoration: underline;   /* reads as an action, not a sentence */
+}
 
 .btn-primary {
   background: var(--accent);
@@ -157,21 +173,6 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .row.end { justify-content: flex-end; }
 .row.between { justify-content: space-between; }
 
-/* progress — quiet, unhurried, no aggressive countdown */
-.progress {
-  display: flex;
-  gap: .35rem;
-  margin-bottom: 1.25rem;
-}
-.pip {
-  height: 6px;
-  flex: 1;
-  border-radius: 999px;
-  background: var(--line);
-  transition: background .3s ease;
-}
-.pip.on { background: var(--accent); }
-
 /* argument recall, dimmed for reference */
 .recall {
   font-size: .9rem;
@@ -191,16 +192,15 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  cursor: pointer;
 }
-.recall.clamped::after {                 /* fade hint + affordance that there's more */
-  content: "… show more";
+.recall.clamped::after {                 /* soft fade so the clamp edge isn't a hard cut */
+  content: "";
   position: absolute;
   right: 0;
   bottom: 0;
-  padding-left: 2.5rem;
-  color: var(--accent);
-  background: linear-gradient(90deg, transparent, var(--card) 2rem);
+  width: 3rem;
+  height: 1.4em;
+  background: linear-gradient(90deg, transparent, var(--card));
 }
 .recall.clamped.open {
   display: block;
@@ -209,12 +209,11 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   overflow: visible;
 }
 .recall.clamped.open::after { content: none; }
-.recall.clamped:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-.question-text { font-size: 1.35rem; margin: 0; }
+.recall-toggle { margin: -1rem 0 1.25rem; }   /* sits just under the clamped quote */
 
 /* verdicts */
-.verdict-title { font-size: 1.65rem; margin: .25rem 0 .75rem; }
+.verdict-title { font-size: 1.55rem; margin: .25rem 0 .75rem; }
+h1.verdict-title { font-size: 1.55rem; }   /* the payoff line is the screen's h1 */
 .verdict-valid .verdict-title,
 .verdict-cynic .verdict-title { color: var(--valid); }
 .verdict-accuse .verdict-title { color: var(--suspect); }
@@ -257,7 +256,7 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   font: inherit;
   text-align: left;
   cursor: pointer;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   background: var(--card);
   color: var(--ink);
   border-radius: 12px;
@@ -286,14 +285,14 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .checklist {
   display: flex;
   flex-direction: column;
-  gap: .15rem;
+  gap: 0;                 /* border sits at the true row midpoint, even rhythm */
   margin: 1.25rem 0;
 }
 .check-row {
   display: flex;
   align-items: center;
   gap: .75rem;
-  padding: .7rem 0;
+  padding: .9rem 0;
   border-bottom: 1px solid var(--line);
 }
 .check-row:last-child { border-bottom: none; }
@@ -308,9 +307,10 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   justify-content: center;
   gap: .1rem;
   min-width: 3.4rem;
-  padding: .35rem .3rem;
+  min-height: 44px;        /* HIG/WCAG 2.5.8 touch target */
+  padding: .5rem .3rem;
   border-radius: 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   background: var(--card);
   color: var(--ink-soft);
   transition: transform .12s ease, background .15s ease, border-color .15s ease, color .15s ease;
@@ -327,6 +327,7 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 }
 /* On narrow phones the three labeled pills can crowd the question; let the row wrap gracefully. */
 @media (max-width: 30rem) {
+  .card { padding: 1.5rem 1.15rem; }   /* reclaim horizontal room on ~360px screens */
   .check-row { flex-wrap: wrap; }
   .tri-group { width: 100%; justify-content: flex-end; }
 }
@@ -337,13 +338,19 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
    real file loads, so a missing mascot collapses to nothing rather than a broken icon. */
 #mascot-canvas {
   width: 96px;
-  margin: 0 auto -0.5rem;     /* slight overlap so it nestles onto the card */
+  margin: 0 auto;
   display: flex;
   justify-content: center;
   align-items: flex-end;
   position: relative;
   z-index: 2;
-  min-height: 84px;          /* reserve the slot so the card doesn't jump when art appears */
+  min-height: 0;             /* parked: no art, so collapse the slot (no phantom gap above the card) */
+}
+/* When real art ships, mascot.js drops [hidden] on the <img>; that re-expands the reserved slot and
+   restores the nestle-onto-the-card overlap automatically. No code change needed when art lands. */
+#mascot-canvas:has(#mascot-img:not([hidden])) {
+  min-height: 84px;
+  margin-bottom: -0.5rem;
 }
 #mascot-img {
   display: block;
