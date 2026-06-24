@@ -39,6 +39,7 @@ steelman/
 │   ├── engine.test.js      # the math, vs ENGINE-SPEC.md traces, on a fixed tiny bank
 │   └── calibration.test.js # the real data/: 0 false accusations + catch-rate floor (G10)
 └── guidance/               # these docs
+    ├── HOW-IT-DECIDES.md     # plain walkthrough of the verdict (the WHAT, for humans)
     ├── ENGINE-SPEC.md        # the canonical contract (the WHAT — math, schema, guardrails)
     ├── DESIGN-PRINCIPLES.md  # the WHY (read this first)
     ├── ADDING-FALLACIES.md   # the HOW (extend via data, no code)
