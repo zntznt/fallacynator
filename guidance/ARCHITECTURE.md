@@ -40,6 +40,7 @@ steelman/
 │   └── calibration.test.js # the real data/: 0 false accusations + catch-rate floor (G10)
 └── guidance/               # these docs
     ├── HOW-IT-DECIDES.md     # plain walkthrough of the verdict (the WHAT, for humans)
+    ├── WHY-THESE-WEIGHTS.md  # the rationale behind the lr weight values
     ├── ENGINE-SPEC.md        # the canonical contract (the WHAT — math, schema, guardrails)
     ├── DESIGN-PRINCIPLES.md  # the WHY (read this first)
     ├── ADDING-FALLACIES.md   # the HOW (extend via data, no code)

@@ -39,6 +39,7 @@ families, the checklist virtues, and the routing cues — lives in plain JSON, s
 without touching code.
 
 - **How it decides (plain walkthrough):** [`guidance/HOW-IT-DECIDES.md`](guidance/HOW-IT-DECIDES.md) — start here to explain the app to someone
+- **Why the weights are what they are:** [`guidance/WHY-THESE-WEIGHTS.md`](guidance/WHY-THESE-WEIGHTS.md)
 - **Why it's built this way:** [`guidance/DESIGN-PRINCIPLES.md`](guidance/DESIGN-PRINCIPLES.md)
 - **Add a fallacy (no coding):** [`guidance/ADDING-FALLACIES.md`](guidance/ADDING-FALLACIES.md)
 - **The map:** [`guidance/ARCHITECTURE.md`](guidance/ARCHITECTURE.md)
