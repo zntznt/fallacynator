@@ -356,10 +356,10 @@ function renderCynic(why, rejectedFallacy) {
       `be reading it carefully. That’s an honest place to land.`
     : 'There may be nothing wrong here at all — you might just be reading it carefully, which is a good thing.';
   app.append(el('section', { className: 'card verdict-cynic' },
-    el('p', { className: 'kicker', textContent: 'The verdict' }),
-    el('p', { className: 'verdict-title', textContent: '…or maybe it’s just healthy skepticism.' }),
+    el('p', { className: 'kicker', textContent: 'The result' }),
+    el('p', { className: 'verdict-title', textContent: 'Maybe it’s just you reading carefully.' }),
     el('p', { textContent: body }),
-    el('p', { className: 'muted', textContent: 'Skepticism is healthy. Treating every argument as guilty is the thing worth resisting.' }),
+    el('p', { className: 'muted', textContent: 'Reading carefully is a good thing. Treating every argument as guilty is the part worth resisting.' }),
     restartRow(),
   ));
 }
