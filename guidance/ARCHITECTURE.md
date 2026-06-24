@@ -24,7 +24,7 @@ entirely in the browser and is hosted on GitHub Pages. Everything the engine kno
 ## File map
 
 ```
-fallacynator/
+steelman/
 ├── index.html              # shell: one <main> the UI renders into
 ├── .nojekyll               # tells GitHub Pages to serve files raw (no Jekyll preprocessing)
 ├── data/
@@ -96,7 +96,7 @@ beliefs(state)       // → {hypothesis: probability} snapshot (used by tests/UI
 **Locally** — the app `fetch()`es JSON, which the browser blocks under `file://`. So serve it:
 
 ```bash
-cd fallacynator
+cd steelman
 python3 -m http.server 8000
 # open http://localhost:8000
 ```

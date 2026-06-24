@@ -1,4 +1,4 @@
-# Fallacynator — Canonical Engine & Data-Schema Specification
+# Steelman — Canonical Engine & Data-Schema Specification
 
 **Status:** Contract. The implementation (`src/engine.js`), the JSON content banks (`data/`), and the rest of the docs all follow this document. Vanilla JS, no build step, no framework, no LLM at runtime, static GitHub Pages.
 

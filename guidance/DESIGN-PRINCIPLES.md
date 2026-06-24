@@ -1,4 +1,4 @@
-# Design principles — why Fallacynator works the way it does
+# Design principles — why Steelman works the way it does
 
 This is the *why*. If you only read one doc before changing anything, read this one. Every
 mechanical decision in [ENGINE-SPEC.md](ENGINE-SPEC.md) exists to serve the principles here. If a
@@ -10,7 +10,7 @@ change conflicts with these, the change is wrong, not the principles.
 
 > **There is too much cynicism on the internet, and this app refuses to add to it.**
 
-Fallacynator answers one question: *"Is there a fallacy, or am I just being cynical?"* It exists
+Steelman answers one question: *"Is there really a fallacy, or am I just being skeptical?"* It exists
 to **disarm cynics**, not to arm them. It reads every argument charitably and starts from goodwill.
 It only flags a fallacy when the evidence genuinely holds up — and even then it suspects rather
 than accuses, and hands the final call to the user.

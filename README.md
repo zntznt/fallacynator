@@ -1,11 +1,13 @@
-# Fallacynator
+# Steelman
 
-**Is there a fallacy, or am I just being cynical?**
+**Is there really a fallacy, or am I just being skeptical?**
 
-Paste an argument you're unsure about. Fallacynator points you to the *kind* of problem it might
-have (or none), then shows a short checklist of the things a **sound** argument does — you mark what
-holds up and what falls short — and tells you whether there's likely a logical fallacy, or whether
-the argument stands.
+*Steelman is the opposite of strawman: read an argument at its strongest before you judge it.*
+
+Paste an argument you're unsure about. Steelman points you to the *kind* of thing that might be off
+(or none), then shows a short checklist of the things a **sound** argument does — you mark what holds
+up and what falls short — and tells you whether there's likely a logical fallacy, or whether the
+argument stands.
 
 The twist: **it starts from goodwill, and you look for what's right, not what's wrong.** There is
 too much cynicism on the internet, and this app refuses to add to it. The checklist is positive: you

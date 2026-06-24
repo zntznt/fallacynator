@@ -1,4 +1,4 @@
-// Fallacynator inference engine.
+// Steelman inference engine.
 // Belief-weighted (Bayesian-ish) reasoning that DISARMS CYNICS: a strong prior on
 // VALID ("the argument holds up") that must be beaten by a triple gate before any
 // fallacy is ever named. See guidance/ENGINE-SPEC.md — this file is that spec in code.

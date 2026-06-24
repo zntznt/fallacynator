@@ -1,6 +1,6 @@
 # Adding a fallacy
 
-**You do not touch any code.** Fallacynator reads everything from `data/*.json`. Adding a fallacy
+**You do not touch any code.** Steelman reads everything from `data/*.json`. Adding a fallacy
 is append-only JSON across **four files**. The engine validates your edits at load, and four test
 suites fail loudly if you break a goodwill guarantee or leave the fallacy unreachable — that's the
 safety net, lean on it.

@@ -1,4 +1,4 @@
-// Fallacynator UI — positive-first, family-routed checklist.
+// Steelman UI — positive-first, family-routed checklist.
 // All reasoning lives in the (tested) engine; this file gathers a paste, a family choice, and a
 // virtue checklist, then asks the engine to score. Adding a fallacy never touches this file.
 //
@@ -64,14 +64,14 @@ function renderStart() {
   });
   const begin = el('button', { className: 'btn btn-primary', textContent: 'Think it through →' });
   const card = el('section', { className: 'card' },
-    el('p', { className: 'kicker', textContent: 'Fallacynator' }),
-    el('h1', { textContent: 'Is there a fallacy, or am I just being cynical?' }),
+    el('p', { className: 'kicker', textContent: 'Steelman' }),
+    el('h1', { textContent: 'Is there really a fallacy, or am I just being skeptical?' }),
     el('p', {
       className: 'lede',
       textContent:
-        'Paste an argument you’re unsure about. We’ll read it as fairly as we can, ' +
-        'look at what it does well, and only flag a problem if the good-faith reading ' +
-        'genuinely falls short. No accounts, no AI, nothing leaves your browser.',
+        'Paste an argument you’re unsure about. We’ll read it at its strongest first, ' +
+        'note what it does well, and only point to a gap if the fair reading genuinely ' +
+        'falls short. No accounts, no AI, nothing leaves your browser.',
     }),
     ta,
     el('div', { className: 'row end' }, begin),
@@ -105,7 +105,7 @@ function renderFamilyPick() {
   card.append(el('p', { className: 'muted',
     textContent: bucketSuggestion
       ? 'A quick scan suggests a place to start — but trust your own read. Pick the kind of problem, then we’ll narrow it.'
-      : 'Pick the kind of problem you suspect, then we’ll narrow it — or, if it reads fine, say so.' }));
+      : 'Pick the kind of thing that feels off, then we’ll narrow it — or, if it reads fine, say so.' }));
 
   const opts = el('div', { className: 'family-list' });
 
@@ -120,12 +120,14 @@ function renderFamilyPick() {
     opts.append(b);
   }
 
-  // The five buckets (each opens its families).
+  // The buckets (each opens its families). Only highlight the suggested bucket when there's no
+  // fast-path family shown above — otherwise the highlight would point at two things at once.
   const bm = Object.fromEntries((DATA.buckets || []).map((b) => [b.id, b]));
   for (const bucket of buckets) {
     const meta = bm[bucket];
     if (!meta) continue;
-    const b = el('button', { className: 'family-opt' + (bucket === bucketSuggestion ? ' suggested' : '') },
+    const highlight = !famSuggestion && bucket === bucketSuggestion;
+    const b = el('button', { className: 'family-opt' + (highlight ? ' suggested' : '') },
       el('span', { className: 'family-opt-title', textContent: meta.name }),
       el('span', { className: 'family-opt-sub', textContent: meta.prompt }),
     );
@@ -254,9 +256,9 @@ function renderAccuse(result) {
   const yes = el('button', { className: 'btn btn-primary', textContent: 'Yes — that fits' });
   const no = el('button', { className: 'btn', textContent: 'No — that’s not it' });
   const card = el('section', { className: 'card verdict-accuse' },
-    el('p', { className: 'kicker', textContent: 'A tentative thought' }),
-    el('p', { className: 'verdict-title', textContent: `This might be leaning toward ${f.name}.` }),
-    el('p', { className: 'muted', textContent: 'It’s only a suspicion — you’re the judge. Here’s what that means:' }),
+    el('p', { className: 'kicker', textContent: 'One thing to check' }),
+    el('p', { className: 'verdict-title', textContent: `There may be a gap here — it looks like ${f.name}.` }),
+    el('p', { className: 'muted', textContent: 'That’s just what we noticed — you’re the judge. Here’s what it means:' }),
     el('div', { className: 'teaching' },
       el('span', { className: 'name', textContent: f.name + '. ' }),
       document.createTextNode(f.teaching),
@@ -275,10 +277,10 @@ function renderConfirmed(f) {
     el('p', { className: 'kicker', textContent: 'You made the call' }),
     el('p', { className: 'verdict-title', textContent: `Looks like a ${f.name}.` }),
     el('p', { textContent:
-      'You confirmed it — the argument seems to rest on this rather than on its own merits. ' +
-      'Naming a fallacy isn’t a “gotcha,” though: the underlying point might still be worth ' +
-      'engaging once it’s argued fairly.' }),
-    el('p', { className: 'muted', textContent: 'Spotting the flaw is the easy part. Steelmanning what’s left is the generous one.' }),
+      'You confirmed it — the argument seems to lean on this rather than stand on its own merits. ' +
+      'Naming it isn’t a “gotcha,” though: the underlying point might still be worth engaging once ' +
+      'it’s made fairly. The generous next move is to ask for the stronger version.' }),
+    el('p', { className: 'muted', textContent: 'Spotting the gap is the easy part. Steelmanning what’s left is the generous one — and the whole point here.' }),
     restartRow(),
   ));
 }
@@ -291,8 +293,8 @@ function renderInconclusive(result) {
     : 'There might be something here, but not enough to call it.';
   app.append(el('section', { className: 'card verdict-cynic' },
     el('p', { className: 'kicker', textContent: 'The verdict' }),
-    el('p', { className: 'verdict-title', textContent: 'Inconclusive — and that’s allowed.' }),
-    el('p', { textContent: lean + ' We’d rather say “not sure” than accuse an argument that might be fine.' }),
+    el('p', { className: 'verdict-title', textContent: 'Not enough to call it — and that’s okay.' }),
+    el('p', { textContent: lean + ' We’d rather say “not sure” than pin a label on an argument that might be fine.' }),
     el('p', { className: 'muted', textContent: 'Trust your judgment. If it still feels off, the fair move is to ask the other person to spell out their reasoning.' }),
     restartRow(),
   ));
@@ -315,13 +317,13 @@ function renderValid(familyId) {
 function renderCynic(why, rejectedFallacy) {
   clear();
   const body = why === 'rejected'
-    ? `You looked at the suspicion of ${rejectedFallacy.name} and decided it didn’t fit — good. ` +
-      `We won’t reach for a second-best accusation. The argument may simply be sound, and you may ` +
-      `just be a little skeptical. That’s an honest place to land.`
-    : 'There may be no fallacy here at all — you might just be feeling skeptical, and that’s okay.';
+    ? `You looked at whether it was ${rejectedFallacy.name} and decided it didn’t fit — good. ` +
+      `We won’t reach for a second-best label. The argument may simply be sound, and you may just ` +
+      `be reading it carefully. That’s an honest place to land.`
+    : 'There may be no fallacy here at all — you might just be reading it with healthy skepticism, and that’s okay.';
   app.append(el('section', { className: 'card verdict-cynic' },
     el('p', { className: 'kicker', textContent: 'The verdict' }),
-    el('p', { className: 'verdict-title', textContent: '…or maybe you’re just being a little cynical.' }),
+    el('p', { className: 'verdict-title', textContent: '…or maybe it’s just healthy skepticism.' }),
     el('p', { textContent: body }),
     el('p', { className: 'muted', textContent: 'Skepticism is healthy. Treating every argument as guilty is the thing worth resisting.' }),
     restartRow(),
@@ -339,7 +341,7 @@ function renderLoadError(err) {
   clear();
   app.append(el('section', { className: 'card' },
     el('p', { className: 'kicker', textContent: 'Couldn’t start' }),
-    el('h1', { textContent: 'Fallacynator' }),
+    el('h1', { textContent: 'Steelman' }),
     el('p', { className: 'error', textContent: err.message || String(err) }),
   ));
 }
