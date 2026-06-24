@@ -277,6 +277,9 @@ function renderAccuse(result) {
     el('p', { className: 'muted', textContent: 'That’s just what we noticed — you’re the judge. Here’s what it means:' }),
     el('div', { className: 'teaching' },
       el('span', { className: 'name', textContent: f.name + '. ' }),
+      // Teach the word "fallacy" exactly once, attached to a concrete example the user is looking
+      // at — not in the intro, where the neophyte panel found it bounced off everyone cold.
+      el('span', { className: 'aside', textContent: '(a weak spot like this is what people call a “fallacy”) ' }),
       document.createTextNode(f.teaching),
       el('p', { className: 'check', textContent: f.confirm_check }),
     ),

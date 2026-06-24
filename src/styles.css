@@ -189,6 +189,7 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   margin: 1.25rem 0;
 }
 .teaching .name { font-weight: 600; }
+.teaching .aside { color: var(--ink-soft); font-size: .92rem; }
 .check { font-style: italic; color: var(--ink); margin: 1rem 0 .25rem; }
 
 .muted { color: var(--ink-soft); font-size: .92rem; }
