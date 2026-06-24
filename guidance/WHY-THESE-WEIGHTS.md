@@ -81,18 +81,18 @@ One missing virtue is a fair-minded "hmm, but maybe"; two independent missing vi
 fallacy is a real pattern. The weights are the values that make exactly that true. Measured across
 the catalog with the standard `4.5 / 0.3`:
 
-| | f / VALID ratio | vs. gate (0.12) | verdict |
+| | f / VALID ratio (measured across all 73 fallacies) | vs. gate (0.12) | verdict |
 |---|---|---|---|
-| **1 virtue denied** | ~0.04 – 0.06 | **below** | holds up ✓ |
-| **2 virtues denied** | ~0.18 – 0.28 | **above** | accuse ✓ |
+| **1 virtue denied** | 0.04 – 0.06 | **below** | holds up ✓ |
+| **2 virtues denied** | 0.15 – 0.22 | **above** | accuse ✓ |
 
-(Verified live for ad_hominem, strawman, tu_quoque, appeal_to_authority, appeal_to_emotion,
-appeal_to_nature — the pattern is consistent. Re-run the check in
-[ADDING-FALLACIES.md](ADDING-FALLACIES.md) if you change the gate or the weights.)
+(Measured live across the full catalog: every fallacy's 1-denial falls in 0.04–0.06 and every
+2-denial in 0.15–0.22 — so one denial is always below the 0.12 gate and two are always above. Re-run
+the check in [ADDING-FALLACIES.md](ADDING-FALLACIES.md) if you change the gate or the weights.)
 
-Read the other way: **the gate (0.12) was set first** — at the midpoint of the measured 1-denial
-(~0.06) and 2-denial (~0.18) window — and **4.5 / 0.3 are the weights that land cleanly on either
-side of it with comfortable margin.** Change one and you must re-check the other.
+Read the other way: **the gate (0.12) sits between the two windows** — comfortably above the
+1-denial ceiling (0.06) and below the 2-denial floor (0.15) — and **4.5 / 0.3 are the weights that
+put those windows on either side of it.** Change one and you must re-check the other.
 
 ### Why not bigger weights?
 Bigger `yes` (say 9) would let a *single* denial convict — losing the "one isn't enough" charity, and
@@ -101,9 +101,17 @@ clamps per-cell likelihoods (`L_MIN`/`L_MAX`) and the max ratio within a row (`M
 precisely so no single answer can be near-decisive. 4.5 sits comfortably inside that clamp.
 
 ### Why not smaller?
-Smaller `yes` (say 2.5) and even two denials wouldn't out-rise the 60% innocence prior — real
-fallacies would never clear the gate, and the app would call everything "fine." We saw exactly this
-when correlation-damping (`EVIDENCE_DAMP`) was below 1.0; it's documented in `CONFIG`.
+Going smaller erodes *margin*, not feasibility. Measured live in the isolated `{VALID, F}` pair
+against `CHECKLIST_RATIO_VALID = 0.12`: with `yes: 2.5 / no: 0.3`, two denied own-tells *still*
+reach f/VALID ≈ 0.14–0.20 (e.g. ad_hominem 0.20, appeal_to_authority 0.14) — above 0.12, so two real
+denials would still convict. But the comfortable two-denial margin at 4.5 (0.15–0.22) collapses
+toward the gate at 2.5 (appeal_to_authority lands at 0.14, barely clear), and the single-denial value
+(which must stay safely *below* 0.12) creeps up
+correspondingly — shrinking the clean separation between "one isn't enough" and "two convict" and
+risking borderline false accusations. 4.5 keeps that window wide; 2.5 narrows it dangerously.
+*(Don't argue this against the 60% global prior — that prior governs the retired sequential
+interview, not the live checklist, which scores each fallacy isolated against the 0.12 gate. An
+earlier version of this doc made exactly that mistake.)*
 
 ---
 
@@ -123,9 +131,12 @@ when correlation-damping (`EVIDENCE_DAMP`) was below 1.0; it's documented in `CO
    calibration test — not a schema rule — that actually keep it honest.
 
 2. **No false accusations, ever** *(this one IS enforced).* Whatever weights you pick,
-   `tests/calibration.test.js` asserts that **zero** sound fixtures get accused. If a new weight
-   causes a false accusation, the weight is wrong — full stop. This is the sacred line; the weights
-   serve it, not the other way around.
+   `tests/calibration.test.js` asserts that **zero** fallacy-free fixtures are confirmed-accused under
+   their own label (on the legacy sequential engine), and `tests/checklist.test.js` asserts the live
+   checklist's never-accuse conditions (one denial never accuses; affirming/skipping never accuses).
+   If a new weight causes a false accusation, the weight is wrong — full stop. This is the sacred
+   line; the weights serve it, not the other way around. *(Note: "fallacy-free" here means "no
+   catalogued fallacy present" — not logical soundness, which the app never evaluates.)*
 
    *(What `validateBank` does check at load time, related to weights: G2 — an incriminating `yes`
    must cost VALID (`lr.VALID.yes ≤ 1.0`); G4 — the max/min ratio within one answer row can't exceed
@@ -156,22 +167,29 @@ fallacies equally probable? Measured against the live catalog, the answer is **n
 and a designed-for outcome in the messy one:**
 
 - **Within a family, tells don't overlap.** Each sibling fallacy owns its *own* distinct questions
-  (checked: zero shared tells in the families surveyed). So when a user denies one fallacy's tells,
-  only that fallacy's isolated score moves — it wins cleanly. Denying any fallacy's own two tells and
-  asking "does it dominate its family runner-up by 2.5×?" → **73 / 73 clean wins.** No tie.
+  (checked: zero shared tells in the families surveyed). For the cleanest input — deny exactly one
+  fallacy's own two tells and nothing else — every one of the 73 fallacies separates from its family
+  runner-up by ≥2.5×: **73/73, no built-in tie.** This is a per-fallacy *separability* check (it
+  sweeps the catalog one fallacy at a time), **not a rate over real inputs** — how often real inputs
+  are this clean is a separate, unmeasured question, and messy inputs route to a lean by design (next
+  bullet).
 
-- **When the argument genuinely spans two fallacies, the engine refuses to guess.** If a user denies
-  a tell of fallacy A *and* a tell of fallacy B, neither clears the runner-up gate, so the verdict is
-  **`inconclusive_lean`** — "might be B, but not enough to be sure," naming the leader without
-  accusing. A real tie produces an honest non-committal answer, not a coin-flip. That's the goodwill
-  thesis applied to the app itself: epistemic humility when the evidence is ambiguous.
+- **When the argument genuinely spans two fallacies, the engine refuses to convict.** A lean reaches
+  the user in two cases: (1) two fallacies each beat innocence but neither dominates the other by
+  2.5× — genuine ambiguity between two live hypotheses; and (2) no single fallacy cleared innocence,
+  but two or more were each independently nicked, which the engine treats as "less sound, not sound."
+  Both return **`inconclusive_lean`** — a softened, hedged verdict, not a coin-flip: it still names
+  the highest-scoring fallacy as a tentative lean (`leanFallacy`) but withholds the accusation. That's
+  the goodwill thesis applied to the app itself — humility about *confidence* (we won't convict on
+  ambiguous evidence), not a claim that we've suspended judgment about which fallacy is likeliest.
 
 - **The one genuine failure — two fallacies tied at the 4.5 owner tier on the same question — does
   not exist today** (every strong-tier question has a single clear owner) and is now caught at load
   time by a **G8b warning** in `validateBank`, so it can't silently creep in as fallacies are added.
 
-So ties aren't a flaw the system stumbles into — the only "tie" that reaches the user is the
-*legitimate* one (a genuinely ambiguous argument), and it has its own correct verdict.
+So ties aren't a flaw the system stumbles into — every lean that reaches the user is a deliberate
+hedge, never an accusation. (Whether case (2) above should lean rather than simply hold up is a
+defensible design choice, not a logical necessity.)
 
 ## One-paragraph version
 

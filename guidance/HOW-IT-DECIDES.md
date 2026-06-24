@@ -26,11 +26,20 @@ So "how does it know it's a fallacy?" really means two things:
 Before you answer anything, the app assigns a **prior**: how likely each verdict is, with no
 evidence yet. (`newSession` in the engine.)
 
-- **VALID (it's fine): 60%** — the strong "innocent until proven otherwise" prior (`PRIOR_VALID`).
+- **VALID (it's fine): 60%** — a deliberately high starting prior on "no fallacy is present"
+  (`PRIOR_VALID`, a tunable value with a 0.55 floor enforced by `validateBank` G7). We borrow
+  courtroom language — "innocent until proven otherwise" — as a charitable *stance toward the person
+  making the argument*, not a literal property of the argument.
 - The remaining 40% is split across *all the fallacies*, weighted by how common each one is.
 
-This is the goodwill thesis, encoded as a number. An argument starts mostly assumed-sound, and your
-answers have to *earn* a fallacy verdict against that head start.
+> **What "VALID" does and doesn't mean.** It's just the name of the no-fallacy hypothesis — **not**
+> logical validity or soundness. The app never checks whether the conclusion follows from the
+> premises, or whether the premises are true. It estimates whether one catalogued fallacy is present,
+> and (for the "earned" outcome) whether you affirmed real virtues. "Holds up" is the honest plain
+> gloss; "valid"/"sound" are not claims the engine can make.
+
+This is the goodwill thesis, encoded as a number. The engine starts the VALID hypothesis ahead, so
+the evidence in your answers has to outweigh that head start before any fallacy is named.
 
 ---
 
@@ -91,8 +100,9 @@ works in three moves:
 2. **You answer each "Does it…?" question** with 👍 (yes, it does this good thing), 👎 (no, it
    doesn't), or "doesn't apply"/skip (no signal). Each question is framed as a *virtue a healthy
    argument has*, so:
-   - 👍 = "it does the good thing" = evidence the argument is **fine**.
-   - 👎 = "it doesn't" = evidence of the **fallacy**.
+   - 👍 = "it does the good thing" = evidence *against the specific fallacy this question targets* —
+     not, by itself, that the argument is fine overall.
+   - 👎 = "it doesn't" = evidence *for* that fallacy.
 
 3. **Each fallacy is scored in its own private two-way contest** — just *that fallacy vs. VALID*,
    using only *its own* questions (`scoreFallacy`). This is the important subtlety: if you honestly
@@ -100,6 +110,12 @@ works in three moves:
    look innocent. Scoring each fallacy in isolation stops one fallacy's "all good here" answers from
    washing out another fallacy's real failures. (This was a bug we fixed — see the
    [philosopher panel report](PHILOSOPHER-PANEL-REPORT.md), finding C-1.)
+
+> **These per-fallacy scores are *not* one probability distribution.** Each is normalized inside its
+> own two-hypothesis {it's-fine, this-fallacy} world — deliberately, so siblings can't dilute each
+> other — so they don't sum to 100% across fallacies and aren't joint credences. Treat them as a
+> comparable *severity ranking*. (The "sums to 100" / belief-update picture in Step 2 describes the
+> retired sequential interview, where all hypotheses do share one distribution.)
 
 ---
 
@@ -139,13 +155,32 @@ if nothing beats innocence, the argument **holds up**.
 
 People expect "I marked a lot of red, why isn't it a fallacy?" The answer: marking many 👎 spread
 across *different* fallacies doesn't make any *single* one dominate — so the app honestly says "not
-sure," not "sound" and not a confident accusation. Suspicion has to **concentrate** on one fallacy
-to name it. This is the same principle as a court: lots of vague doubt isn't a conviction.
+sure," not a confident accusation. Suspicion has to **concentrate** on one fallacy to name it.
 
-And the reverse is the sacred rule: **the app will never accuse a sound argument.** The whole gate is
-tuned so that genuinely-fine arguments peak far below the accusation line (verified continuously by
-`tests/calibration.test.js`, which asserts **zero false accusations**). When in doubt, it holds up or
-leans — it does not pin a label.
+Two different things are going on here, and only one of them is courtroom-like:
+
+- **Beating innocence is a genuine standard of proof.** The prior is "it holds up," and the evidence
+  must decisively overcome it — that part *is* like a court raising the bar before a conviction.
+- **Beating the runner-up fallacy by 2.5× is NOT courtroom logic.** A court convicts on the proven
+  elements of the charged offense regardless of whether *another* charge also fits; here, if two
+  fallacy labels score close, we decline to name either. So an argument can decisively beat innocence
+  — be *genuinely* fallacious — and still come back "not enough to be sure" purely because the *label*
+  is ambiguous. (And unlike a court, scattered failures across different fallacies don't earn a clean
+  pass: two-or-more independently nicked fallacies yield a hedged lean toward the strongest, not
+  "holds up.")
+
+And the gate carries a strong **false-positive bias** by design. In the live checklist: denying a
+single virtue never accuses, affirming or skipping never accuses, and the engine never names a fallacy
+other than the one whose *own* tells were denied — all asserted by `tests/checklist.test.js`. On our
+hand-written fallacy-free fixtures, the (legacy sequential) engine also never produced a confirmed
+accusation matching the fixture's label (`tests/calibration.test.js`).
+
+One honest caveat, since this is a rationale doc: the app does **not** evaluate the logical validity or
+premise-truth of your argument — it scores your *answers* (see the top of this doc) — so it cannot
+*certify* that an argument is philosophically sound. What it guarantees is narrower and real:
+**suspicion must concentrate on one fallacy's own denied tells before it names anything.** When in
+doubt, it holds up or leans — and a lean names the leading fallacy only as a hedged "might be X, not
+sure," never as a confident accusation.
 
 ---
 

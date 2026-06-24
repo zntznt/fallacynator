@@ -44,8 +44,8 @@ export const CONFIG = {
                                // siblings can't dilute it; panel fix C-1). Sits at the midpoint of
                                // the measured window for the current 73-fallacy / 21-family bank:
                                // one denied own-tell tops out at f/VALID ≈ 0.06, two denied bottoms
-                               // out at ≈ 0.18 (appeal_to_nature). 0.12 is the midpoint — safe margin
-                               // both sides. The absolute value shifts as the catalog grows, so
+                               // out at ≈ 0.15 (appeal_to_nature; max ≈ 0.22). 0.12 sits between the
+                               // windows — safe margin both sides. The value shifts as the catalog grows, so
                                // RE-MEASURE and re-center when it changes a lot: a script that prints
                                // max(1-own-denial) and min(2-own-denial) isolated f/VALID across all
                                // fallacies; the midpoint is the right gate.
