@@ -62,6 +62,31 @@ const article = (word) => (/^[aeiou]/i.test(word) ? 'an' : 'a');
 // harmless no-op (the <img> stays hidden). The app never depends on it. See mascot/README.md.
 const steelyStage = (name) => { try { window.steely?.setStage(name); } catch { /* ignore */ } };
 
+// The pasted argument, echoed at the top of later screens as a reminder. A long paste must not clip
+// or push the controls off-screen: clamp it to a few lines with a soft fade, and let the reader
+// click to expand the whole thing. Long unbroken tokens (URLs) wrap rather than overflow sideways.
+const recallBlock = (text) => {
+  // Start clamped, then measure: the 3-line cap is what creates the overflow we're testing for, so
+  // it must be applied before scrollHeight is read (an unclamped block has no overflow to detect).
+  const bq = el('blockquote', { className: 'recall clamped', textContent: text });
+  requestAnimationFrame(() => {
+    if (bq.scrollHeight - bq.clientHeight <= 4) {
+      bq.classList.remove('clamped');   // short paste: no clamp, no toggle needed
+      return;
+    }
+    const toggle = () => bq.setAttribute('aria-expanded', String(bq.classList.toggle('open')));
+    bq.setAttribute('role', 'button');
+    bq.setAttribute('tabindex', '0');
+    bq.setAttribute('aria-expanded', 'false');
+    bq.title = 'Click to show the whole thing';
+    bq.addEventListener('click', toggle);
+    bq.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  });
+  return bq;
+};
+
 // ---------- 1. paste ----------
 function renderStart() {
   clear();
@@ -110,7 +135,7 @@ function renderFamilyPick() {
     : order;
 
   const card = el('section', { className: 'card' });
-  if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
+  if (argument) card.append(recallBlock(argument));
   card.append(el('p', { className: 'kicker', textContent: 'Where to look' }));
   card.append(el('h2', { textContent: 'What feels wrong about it, if anything?' }));
   card.append(el('p', { className: 'muted',
@@ -171,7 +196,7 @@ function renderBucketFamilies(bucket) {
   const fams = (DATA.bucketFamilies[bucket] || []);
 
   const card = el('section', { className: 'card' });
-  if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
+  if (argument) card.append(recallBlock(argument));
   card.append(el('p', { className: 'kicker', textContent: bm[bucket]?.name || 'Narrow it down' }));
   card.append(el('h2', { textContent: 'Which fits best?' }));
 
@@ -228,7 +253,7 @@ function renderChecklist(familyId) {
   const choice = {};   // qid -> 'has' | 'lacks' | 'na'  (absent = skip; all non-has/lacks are neutral)
 
   const card = el('section', { className: 'card' });
-  if (argument) card.append(el('blockquote', { className: 'recall', textContent: argument }));
+  if (argument) card.append(recallBlock(argument));
   card.append(el('p', { className: 'kicker', textContent: familyName(familyId) }));
   card.append(el('h2', { textContent: 'For each one, does the argument do this?' }));
   // We start out trusting the argument. Two short sentences, no em-dashes (the re-audit found slow

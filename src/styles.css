@@ -179,10 +179,37 @@ textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   border-left: 3px solid var(--line);
   padding: .25rem 0 .25rem .85rem;
   margin: 0 0 1.5rem;
-  max-height: 4.5rem;
-  overflow: auto;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;     /* a long URL / unbroken token wraps instead of overflowing sideways */
 }
+/* A long paste is clamped to ~3 lines with a soft fade so it never pushes the controls off-screen.
+   Set as expandable by ui.js (recallBlock) only when it actually overflows. */
+.recall.clamped {
+  position: relative;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+}
+.recall.clamped::after {                 /* fade hint + affordance that there's more */
+  content: "… show more";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding-left: 2.5rem;
+  color: var(--accent);
+  background: linear-gradient(90deg, transparent, var(--card) 2rem);
+}
+.recall.clamped.open {
+  display: block;
+  -webkit-line-clamp: none;
+  line-clamp: none;
+  overflow: visible;
+}
+.recall.clamped.open::after { content: none; }
+.recall.clamped:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .question-text { font-size: 1.35rem; margin: 0; }
 
