@@ -1,0 +1,14 @@
+{
+  "_comment": "Contract for the mascot art. The loader (src/mascot.js) hardcodes this same list; this file is the human-readable source of truth that README.md and the loader agree on. Adding a new expression: add the file, add an entry here, and split its alias in src/mascot.js. (The loader does NOT fetch this file today — that's a deliberate no-extra-network-failure choice; it can be wired to read it if the set needs to grow without touching JS.)",
+  "format": "png",
+  "size": { "source": 252, "display": 84, "square": true, "alpha": true },
+  "path": "mascot/steely-{expression}.png",
+  "expressions": {
+    "input":     { "mood": "welcoming",        "stages": ["input"] },
+    "family":    { "mood": "curious",          "stages": ["family"] },
+    "checklist": { "mood": "attentive",        "stages": ["checklist"] },
+    "gap":       { "mood": "gently concerned", "stages": ["accuse", "inconclusive_lean", "confirmed"] },
+    "holds":     { "mood": "pleased",          "stages": ["valid_earned"] },
+    "skeptic":   { "mood": "easy / reassuring", "stages": ["cynic_valid", "cynic_unsure", "cynic_after_reject"] }
+  }
+}

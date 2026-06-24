@@ -16,7 +16,6 @@ const el = (tag, props = {}, ...kids) => {
 
 let DATA = null;       // loaded bank (incl. families, familyMeta, familyCues, tells)
 let argument = '';     // the pasted argument, for reference + cue scan
-let MASCOT = '';       // inline SVG markup for Steely (themed via the page's CSS variables)
 
 // ---------- bootstrap ----------
 boot();
@@ -30,12 +29,8 @@ async function boot() {
     ]);
     DATA = loadData(fallacies, questions, null, families);
     if (DATA.warnings?.length) console.warn('validateBank warnings:', DATA.warnings);
-    // Static SVG fallback for the mascot, inlined (not <img>) so it themes via CSS vars. The p5
-    // canvas (src/mascot.js) overlays this when it loads; if p5 fails, this is what shows. Either
-    // way the app is unaffected. A failed fetch just means no mascot.
-    MASCOT = await fetch('src/mascot.svg', { cache: 'no-cache' }).then((r) => r.ok ? r.text() : '').catch(() => '');
-    const fb = document.getElementById('mascot-fallback');
-    if (fb && MASCOT) fb.innerHTML = MASCOT;
+    // Mascot is handled entirely by src/mascot.js (swaps a per-stage raster image). Nothing to do
+    // here — steelyStage(...) signals it as the user moves through the app.
     renderStart();
   } catch (err) {
     renderLoadError(err);
@@ -63,8 +58,8 @@ const familyName = (id) => DATA.familyMeta[id]?.name || id;
 // "a" / "an" so we never say "a Ad Hominem" — 27 of the fallacy names start with a vowel sound.
 // ponytail: vowel-letter test, not phonetic; none of the names start with a silent-h or "eu-/u-as-you" word, so it holds.
 const article = (word) => (/^[aeiou]/i.test(word) ? 'an' : 'a');
-// Tell the mascot what stage we're on. Best-effort: if Steely (p5) didn't load, this is a no-op
-// and the static SVG fallback simply stays put. The app never depends on it.
+// Tell the mascot what stage we're on. Best-effort: if the mascot art isn't present, setStage is a
+// harmless no-op (the <img> stays hidden). The app never depends on it. See mascot/README.md.
 const steelyStage = (name) => { try { window.steely?.setStage(name); } catch { /* ignore */ } };
 
 // ---------- 1. paste ----------
@@ -88,7 +83,7 @@ function renderStart() {
       className: 'lede',
       textContent:
         'Type or paste a point someone is making. We’ll assume it’s fair to start, see what it gets ' +
-        'right, and only flag a weak spot if there really is one. No account, no AI. It stays on your device.',
+        'right, and only flag a weak spot if there really is one.',
     }),
     ta,
     el('div', { className: 'row end' }, begin),
