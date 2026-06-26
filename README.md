@@ -1,6 +1,6 @@
 # Steelman
 
-**Is there really a fallacy, or am I just being skeptical?**
+**Is something really wrong with this argument, or am I just being doubtful?**
 
 *Steelman is the opposite of strawman: read an argument at its strongest before you judge it.*
 
