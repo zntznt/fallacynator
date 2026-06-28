@@ -97,6 +97,22 @@ h1, h2, .verdict-title {
 .card h1:focus { outline: none; }   /* programmatic focus target; the visible cue is the heading itself */
 .lede { color: var(--ink-soft); margin: 0 0 1.5rem; }
 
+/* Brand gloss under the "Steelman" kicker. Explains the name once, quietly. */
+.brand-note { color: var(--ink-soft); font-size: .85rem; margin: -.25rem 0 1rem; }
+
+/* The "for example, someone says" block. Deliberately NOT inside the textarea: a placeholder reads
+   as "type your version here," which made every test user overwrite it with their own grievance.
+   As static, quoted, labeled content it reads as an example to imitate, not a field to fill. */
+.example {
+  margin: 0 0 .9rem;
+  padding: .7rem .9rem;
+  border-left: 3px solid var(--line-strong);
+  background: var(--accent-soft);
+  border-radius: 0 10px 10px 0;
+}
+.example-label { display: block; font-size: .78rem; color: var(--ink-soft); margin-bottom: .15rem; }
+.example-quote { margin: 0; font-family: Georgia, "Iowan Old Style", serif; font-style: italic; }
+
 textarea {
   width: 100%;
   min-height: 9rem;
@@ -305,10 +321,10 @@ h1.verdict-title { font-size: 1.55rem; }   /* the payoff line is the screen's h1
   flex-direction: column;   /* icon over an always-visible label (no hover-only legend) */
   align-items: center;
   justify-content: center;
-  gap: .1rem;
-  min-width: 3.4rem;
+  gap: .15rem;
+  min-width: 4.4rem;       /* roomier: holds two-word side-anchored labels ("No, it doesn’t") */
   min-height: 44px;        /* HIG/WCAG 2.5.8 touch target */
-  padding: .5rem .3rem;
+  padding: .5rem .45rem;
   border-radius: 12px;
   border: 1px solid var(--line-strong);
   background: var(--card);
@@ -316,7 +332,9 @@ h1.verdict-title { font-size: 1.55rem; }   /* the payoff line is the screen's h1
   transition: transform .12s ease, background .15s ease, border-color .15s ease, color .15s ease;
 }
 .tri-icon { font-size: 1.1rem; line-height: 1; }
-.tri-label { font-size: .68rem; line-height: 1; white-space: nowrap; }
+/* Two-word labels are allowed to wrap to two short balanced lines rather than overflow, so the copy
+   can change length without re-tuning a fixed width. */
+.tri-label { font-size: .7rem; line-height: 1.15; text-align: center; text-wrap: balance; }
 .tri:hover { transform: translateY(-1px); }
 .tri:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tri-has.on { background: var(--valid); border-color: var(--valid); color: #fff; }

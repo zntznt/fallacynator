@@ -113,32 +113,43 @@ const recallBlock = (text) => {
 // ---------- 1. paste ----------
 function renderStart() {
   clear();
+  // The neophyte panel found the old placeholder was read as "type YOUR situation here," so 8 of 8
+  // pasted a personal grievance instead of someone else's claim. The example now lives OUTSIDE the
+  // box as visibly-static text (you can't overwrite it), and the box starts empty with a plain hint.
   const ta = el('textarea', {
     id: 'arg',
-    placeholder: 'e.g. "We can\'t trust her plan. She failed a class in college."',
+    placeholder: 'Paste what they said here…',
     value: argument,
   });
   steelyStage('input');
-  const begin = el('button', { className: 'btn btn-primary', textContent: 'Start →', 'aria-label': 'Start' });
-  // The re-audit found three regressions here: "best version of it" read as a promise to rewrite
-  // the user's text; the goodwill was piled on so thick it read as preachy; "argument" was heard as
-  // "a fight". Fix: one plain promise (not three nudges), a gloss on "argument", concrete actions,
-  // and "type or paste" / "stays on your phone" for phone-first users.
+  const begin = el('button', { className: 'btn btn-primary', textContent: 'Check it →', 'aria-label': 'Check it' });
+  // The panel found "argument" was heard as "a fight," "fallacy" never appeared until the very end,
+  // and "Steelman" read as Iron Man. Fix: say plainly what to paste (someone else's point), name the
+  // job up front, and gloss both "fallacy" and "Steelman" right here so nothing is a mystery later.
+  const example = el('div', { className: 'example' },
+    el('span', { className: 'example-label', textContent: 'For example, someone says:' }),
+    el('p', { className: 'example-quote', textContent:
+      '“We can’t trust her plan. She failed a class in college.”' }),
+  );
   const card = el('section', { className: 'card' },
     el('p', { className: 'kicker', textContent: 'Steelman' }),
-    el('h1', { className: 'hero', textContent: 'Is something really wrong with this argument, or am I just being doubtful?' }),
+    el('p', { className: 'brand-note', textContent:
+      'To “steelman” is to read someone’s point at its strongest before you judge it. That’s what this does.' }),
+    el('h1', { className: 'hero', textContent: 'Does this point actually hold up?' }),
     el('p', {
       className: 'lede',
       textContent:
-        'Type or paste a point someone is making. We’ll assume it’s fair to start, see what it gets ' +
-        'right, and only flag a weak spot if there really is one.',
+        'Paste something another person said or wrote, the kind of thing you’re not sure about. ' +
+        'We’ll start by assuming it’s fair, see what it gets right, and only point out a weak spot ' +
+        'in the reasoning if there really is one. (That kind of weak spot is what people call a “fallacy.”)',
     }),
+    example,
     ta,
     el('div', { className: 'row end' }, begin),
   );
   // Empty-paste error: a real, announced message, not just a silent color outline.
   const err = el('p', { id: 'arg-err', className: 'error', role: 'alert', hidden: true,
-    textContent: 'Add an argument first, then Start.' });
+    textContent: 'Paste what someone said first, then check it.' });
   card.insertBefore(err, card.querySelector('.row.end'));
   const clearErr = () => {
     err.hidden = true;
@@ -296,11 +307,14 @@ function renderChecklist(familyId) {
   const card = el('section', { className: 'card' });
   if (argument) card.append(recallBlock(argument));
   card.append(el('p', { className: 'kicker', textContent: familyName(familyId) }));
-  card.append(el('h1', { textContent: 'For each one, does the argument do this?' }));
-  // We start out trusting the argument. Two short sentences, no em-dashes (the re-audit found slow
-  // and ESL readers lose the thread at " — "). The reassurance answers the panel's "skip-fear".
+  // The neophyte panel found the positive framing inverted their model: they came hunting what's
+  // BAD, the list asks about what's GOOD, and bare "yes/no" left 6 of 8 unsure which thumb meant
+  // which. Fix: say plainly this is a list of things a FAIR argument does, and that a "no" is where a
+  // weak spot hides. The buttons below are then self-explaining.
+  card.append(el('h1', { textContent: 'Here’s what a fair argument would do. Does this one?' }));
   card.append(el('p', { className: 'muted',
-    textContent: 'Answer the ones you can. Many won’t apply to your example. That’s normal, and it won’t change the result.' }));
+    textContent: 'Tap 👍 if it does that, 👎 if it falls short there. A 👎 is where a weak spot might be. ' +
+      'Answer the ones you can; many won’t apply, and that’s fine.' }));
 
   // Build one question row. Each choice carries its own always-visible label (under the icon), so
   // the meaning of 👍/👎 never hides on hover — the re-audit found the hover legend invisible on
@@ -320,9 +334,12 @@ function renderChecklist(familyId) {
       b.onclick = () => { choice[r.qid] = choice[r.qid] === kind ? undefined : kind; refresh(); };
       return b;
     };
-    const has = mkChoice('has', '👍', 'yes', 'tri-has');
-    const lacks = mkChoice('lacks', '👎', 'no', 'tri-lacks');
-    const na = mkChoice('na', '🤷', 'doesn’t apply', 'tri-na');
+    // Side-anchored labels, not bare "yes/no": the panel found 6 of 8 couldn't tell what "yes" meant
+    // (good? on my side? caught the bad thing?). "Yes, it does" / "No, it doesn't" pin the meaning to
+    // the question itself. Engine mapping is unchanged: has → affirmed → VALID, lacks → denied → fallacy.
+    const has = mkChoice('has', '👍', 'Yes, it does', 'tri-has');
+    const lacks = mkChoice('lacks', '👎', 'No, it doesn’t', 'tri-lacks');
+    const na = mkChoice('na', '🤷', 'Doesn’t apply', 'tri-na');
     function refresh() {
       for (const [b, k] of [[has, 'has'], [lacks, 'lacks'], [na, 'na']]) {
         const on = choice[r.qid] === k;

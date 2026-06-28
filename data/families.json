@@ -23,8 +23,8 @@
     },
     {
       "id": "irrelevant_appeal",
-      "name": "Leans on something beside the evidence",
-      "prompt": "Does it lean on a feeling, a name, or popularity instead of reasons?",
+      "name": "Leans on pressure, money, or flattery",
+      "prompt": "Does it push with a threat, a price tag, a compliment, or “just common sense,” instead of a reason?",
       "cues": [
         "all natural",
         "all-natural",
@@ -35,7 +35,13 @@
         "so it must be good",
         "think of the",
         "suffering children",
-        "you must donate"
+        "you must donate",
+        "you will regret",
+        "do not comply",
+        "or you'll regret",
+        "smart people like you",
+        "rich people",
+        "common sense"
       ],
       "bucket": "appeals"
     },
@@ -61,8 +67,8 @@
     },
     {
       "id": "presumption",
-      "name": "Assumes what it should establish",
-      "prompt": "Does it treat its starting point as true without proving it?",
+      "name": "Builds on an unproven starting point",
+      "prompt": "Does it take its first step for granted, something it never actually showed was true?",
       "cues": [
         "because the book says so",
         "the book is true",
@@ -71,7 +77,12 @@
         "its own conclusion",
         "begs the question",
         "by definition",
-        "it's just true"
+        "it's just true",
+        "have you stopped",
+        "no real fan",
+        "not a real",
+        "no true",
+        "why is it that you"
       ],
       "bucket": "presumption"
     },
@@ -87,13 +98,18 @@
         "beside the point",
         "moving the goalpost",
         "the real issue is",
-        "changing the subject"
+        "changing the subject",
+        "you only say that because",
+        "stand to profit",
+        "two wrongs",
+        "that would mean",
+        "if that were true"
       ]
     },
     {
       "id": "emotional_appeal",
-      "name": "Plays on feelings",
-      "prompt": "Does it work on your feelings instead of giving reasons?",
+      "name": "Pulls on your emotions",
+      "prompt": "Does it work on fear, pity, or anger instead of giving you a reason?",
       "bucket": "appeals",
       "cues": [
         "imagine how",
@@ -107,8 +123,8 @@
     },
     {
       "id": "appeal_to_standing",
-      "name": "Leans on who or how many",
-      "prompt": "Does it rest on who said it, or how many agree, instead of evidence?",
+      "name": "Points to who said it or how many agree",
+      "prompt": "Does it rest on a big name or a crowd, rather than on the actual evidence?",
       "bucket": "appeals",
       "cues": [
         "because we always have",
@@ -147,8 +163,8 @@
     },
     {
       "id": "assumed_conclusion",
-      "name": "Assumes what it's proving",
-      "prompt": "Does its support just repeat the claim it’s trying to prove?",
+      "name": "Uses the claim to prove itself",
+      "prompt": "Does its “reason” just say the same thing as the claim, in a circle?",
       "bucket": "presumption",
       "cues": [
         "obviously true",
@@ -233,7 +249,14 @@
         "plays on the word",
         "equivocat",
         "in one sense",
-        "depends what you mean"
+        "depends what you mean",
+        "some say",
+        "many believe",
+        "where do you draw the line",
+        "no real difference",
+        "the market wants",
+        "market wants",
+        "arguably"
       ]
     },
     {
@@ -286,61 +309,6 @@
         "rare disease",
         "regress",
         "only the winners"
-      ]
-    },
-    {
-      "id": "relevance_extra",
-      "name": "Other ways it dodges",
-      "prompt": "Does it answer something close to the point, but not the point itself?",
-      "bucket": "relevance",
-      "cues": [
-        "you only say that because",
-        "stand to profit",
-        "two wrongs",
-        "that would mean",
-        "if that were true"
-      ]
-    },
-    {
-      "id": "presumption_extra",
-      "name": "Other hidden assumptions",
-      "prompt": "Does it slip in an assumption it never actually earned?",
-      "bucket": "presumption",
-      "cues": [
-        "have you stopped",
-        "no real fan",
-        "not a real",
-        "no true",
-        "why is it that you"
-      ]
-    },
-    {
-      "id": "appeal_extra",
-      "name": "Other off-point appeals",
-      "prompt": "Does it pull on something that doesn’t bear on what’s true?",
-      "bucket": "appeals",
-      "cues": [
-        "you will regret",
-        "do not comply",
-        "or you'll regret",
-        "smart people like you",
-        "rich people",
-        "common sense"
-      ]
-    },
-    {
-      "id": "language_extra",
-      "name": "Other word tricks",
-      "prompt": "Does vague or loaded wording do the real work?",
-      "bucket": "language",
-      "cues": [
-        "some say",
-        "many believe",
-        "where do you draw the line",
-        "no real difference",
-        "the market wants",
-        "market wants",
-        "arguably"
       ]
     }
   ],
@@ -1115,33 +1083,33 @@
   "buckets": [
     {
       "id": "relevance",
-      "name": "It misses the point",
-      "prompt": "The reply seems aimed at something other than the actual point."
+      "name": "It goes after the person, not the point",
+      "prompt": "It answers who is talking, or changes the subject, instead of the actual claim. Like: “you would say that, you failed a class.”"
     },
     {
       "id": "appeals",
-      "name": "It points at the wrong thing",
-      "prompt": "It seems to lean on feelings, popularity, or authority instead of reasons."
+      "name": "It tugs on feelings, status, or the crowd",
+      "prompt": "Instead of giving reasons, it leans on emotion, on who said it, or on how many agree. Like: “everyone knows this is true.”"
     },
     {
       "id": "presumption",
-      "name": "It assumes too much",
-      "prompt": "It seems to take something for granted it should have proven."
+      "name": "It sneaks in something unproven",
+      "prompt": "It treats a shaky starting point as already settled, or just restates the claim as its own proof. Like: “why are you against helping people?”"
     },
     {
       "id": "induction",
-      "name": "It claims more than it shows",
-      "prompt": "The conclusion seems to go further than the evidence supports."
+      "name": "It reaches further than the evidence",
+      "prompt": "It jumps to a big conclusion from thin evidence, a bad comparison, or a wrong cause. Like: “my uncle smoked and lived to 90, so it is fine.”"
     },
     {
       "id": "language",
-      "name": "It plays on words",
-      "prompt": "The wording itself is doing something sneaky."
+      "name": "It hides behind slippery wording",
+      "prompt": "A key word quietly shifts meaning, or vague and loaded wording does the real work. Like calling the same act “brave” or “reckless” to win the point."
     },
     {
       "id": "logic",
-      "name": "The steps don’t add up",
-      "prompt": "The reasoning steps, or the numbers, seem to go wrong."
+      "name": "The steps or numbers do not connect",
+      "prompt": "The if-then reasoning takes a wrong turn, or the numbers and chances are read wrong. Like: “if it rained the ground is wet; the ground is wet, so it rained.”"
     }
   ]
 }
