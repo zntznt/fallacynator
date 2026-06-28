@@ -130,3 +130,30 @@ The re-test surfaced new and residual problems in the MIDDLE of the flow. Three 
 Left for later (deliberately, not failures of these fixes): the screen-2 "What feels wrong" role
 reversal, Latin fallacy names cold on the result screen, the forced single-bucket pick for multi-flaw
 arguments, and same-family checklist rows reading as reworded twins.
+
+## Third panel (focused) and the two residual fixes
+
+A third, focused panel re-walked just the three middle-of-flow fixes: the three affected personas
+plus two fresh first-time controls (so we tested the fixes on their own, not only on the people who
+shaped them). All 5 transcripts passed the realism audit. Grades:
+
+- **FIX2 (honest 👎 isn't cynicism): cleared.** The "isn't being harsh, it's just noticing" line met
+  the guilt at the exact spot; the fresh control was no-gone. Done.
+- **FIX1 (crowd/authority bucket match): mostly cleared.** The reorg works (the authority control
+  landed perfectly), but a residual remained: the shared standing family front-loaded authority rows,
+  so a pure CROWD argument still met "famous name" rows before its match and felt "wrong room" for a
+  half second.
+- **FIX3 (valid verdict not a who's-right ruling): mostly cleared.** The disclaimer worked but lived
+  in muted small print under a stinging headline; the skim-prone user almost missed it.
+
+Both residuals were then fixed (UI only; no data or engine change):
+
+1. **FIX3 residual:** the "About how it's argued, not who's right" frame moved into the verdict
+   KICKER, which renders before the headline, so the reassurance is read first and the gut-drop never
+   lands. Verified by a render check asserting the kicker precedes the title in DOM order.
+2. **FIX1 residual:** within an equal-weight tie, checklist rows now lead with the one whose wording
+   best matches the user's own argument, via a tiny relevance heuristic (literal word overlap plus a
+   4-concept synonym map for crowd / authority / tradition / novelty). A crowd argument now leads with
+   the "how many people believe it" row; an authority argument leads with the "famous name" row; with
+   no argument text it falls back to the original weight order. This only reorders ties, so it cannot
+   change which fallacy scores or the verdict (verified: scoring is set-based and order-independent).

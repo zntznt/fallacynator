@@ -275,6 +275,45 @@ function renderBucketFamilies(bucket) {
   mount(card);
 }
 
+// Lightweight relevance between a checklist row and the user's pasted argument, used ONLY to break
+// ties between equal-weight rows so the most on-topic one leads. Not the engine, not routing: just
+// "does this row's concern echo what the user typed." Two cheap signals are summed:
+//   1. shared content words (stopwords dropped), and
+//   2. shared CONCEPTS via a tiny synonym map, so a row about "how many people believe it" matches a
+//      paraphrase like "everyone in my server says" even with no literal word in common. The map only
+//      covers the concepts where same-weight sibling rows actually compete (crowd vs name vs old/new),
+//      which is where the re-test saw a "wrong room" flicker. Returns a score; 0 with no argument.
+// ponytail: a hand-rolled stopword set + a 4-concept synonym map, not an NLP lib. Tie-break only.
+const STOP = new Set(('a an and are as at be by does do for from has have how in is it its not of on or '
+  + 'rather than that the their them they this to was what when where which who whom why with you your '
+  + 'argument claim point reason really just only made make says said say').split(' '));
+// concept -> [words that signal it in the argument, words that signal it in a row]
+const CONCEPTS = [
+  { arg: ['everyone', 'everybody', 'all', 'most', 'people', 'popular', 'crowd', 'majority', 'trend', 'trending'],
+    row: ['many', 'people', 'believe', 'agree', 'popular', 'crowd'] },                       // bandwagon
+  { arg: ['expert', 'doctor', 'scientist', 'professor', 'famous', 'celebrity', 'official', 'authority'],
+    row: ['name', 'backed', 'expert', 'authority'] },                                        // authority
+  { arg: ['always', 'tradition', 'traditional', 'ancestors', 'generations'],
+    row: ['old', 'traditional', 'lasting', 'long'] },                                        // tradition
+  { arg: ['new', 'newest', 'latest', 'modern', 'cutting'],
+    row: ['new', 'latest', 'newer'] },                                                       // novelty
+];
+function relevanceToArgument(rowText) {
+  if (!argument) return 0;
+  const words = (s) => new Set((String(s).toLowerCase().match(/[a-z]+/g) || []).filter((w) => w.length > 3 && !STOP.has(w)));
+  const argWords = words(argument);
+  if (!argWords.size) return 0;
+  const rowWords = words(rowText);
+  let score = 0;
+  for (const w of rowWords) if (argWords.has(w)) score++;                                    // literal overlap
+  for (const c of CONCEPTS) {                                                                // concept overlap
+    const argHas = c.arg.some((w) => argWords.has(w));
+    const rowHas = c.row.some((w) => rowWords.has(w));
+    if (argHas && rowHas) score += 2;   // a concept match is worth more than a single literal word
+  }
+  return score;
+}
+
 // ---------- 3. the positive-first virtue checklist ----------
 function renderChecklist(familyId) {
   clear();
@@ -292,10 +331,16 @@ function renderChecklist(familyId) {
       seen.add(t.qid);
       const q = qById[t.qid];
       const w = q ? Math.max(...DATA.families[familyId].map((f) => (q.lr[f] && q.lr[f].yes) || 0)) : 0;
-      rows.push({ qid: t.qid, text: t.text, w });
+      rows.push({ qid: t.qid, text: t.text, w, rel: relevanceToArgument(t.text) });
     }
   }
-  rows.sort((a, b) => b.w - a.w);   // most-diagnostic first
+  // Sort by diagnostic weight first (most-telling leads). Within an equal-weight tie, lead with the
+  // row whose wording best matches the user's own argument, so a crowd argument meets the "how many
+  // believe it" row before the "famous name" one (re-test FIX1 residual: a shared family front-loaded
+  // authority rows and a pure crowd argument briefly felt "wrong room"). This only reorders ties, so
+  // it never changes which fallacy scores or the verdict. With no argument text, rel is 0 for all and
+  // the order falls back to the original weight sort.
+  rows.sort((a, b) => (b.w - a.w) || (b.rel - a.rel));
 
   // Progressive disclosure: a family with many tells reads as a "wall" (the neophyte re-audit). Lead
   // with the few most-telling checks; fold the rest behind a toggle. Folded checks stay scored if the
@@ -462,20 +507,24 @@ function renderInconclusive(result) {
 function renderValid(mode) {
   clear();
   const COPY = {
-    // The re-test found "it holds up" gets misread as "the other person is RIGHT and you lose." So
-    // every valid verdict now draws the line explicitly: this checks for a weak spot in HOW the point
-    // is argued, it does not rule on who is correct. You can still disagree with a cleanly-argued point.
+    // The re-test found "it holds up" gets misread as "the other person is RIGHT and you lose," and
+    // the rescue only worked if the user read the muted small print (Sam almost skipped it). Fix: put
+    // the "not who's right" frame in the KICKER (read first, before the headline) AND keep the title
+    // about HOW it's argued, so the gut-drop never gets a chance to land. The muted line stays for detail.
     earned: {
+      kicker: 'About how it’s argued, not who’s right',
       title: 'No weak spot here. It’s argued fairly.',
       body: 'You marked the things a fair argument does, and they checked out. This isn’t just “nothing wrong found.” The way it’s argued does its job.',
       muted: 'This isn’t a ruling that the other person is right. It only means the reasoning has no obvious hole. You can still disagree; the fair way is to answer the actual point.',
     },
     checked: {
+      kicker: 'About how it’s argued, not who’s right',
       title: 'No clear weak spot in how it’s argued.',
       body: 'You looked closely at this kind of problem and gave it a fair chance. The reasoning held up. Nothing clearly wrong with how the point is made.',
-      muted: 'That’s about HOW it’s argued, not about who’s right. You can still think they’re wrong; just take on the actual point rather than a weak spot.',
+      muted: 'You can still think they’re wrong; just take on the actual point rather than a weak spot.',
     },
     skimmed: {
+      kicker: 'About how it’s argued, not who’s right',
       title: 'Nothing jumped out. The reasoning seems fine.',
       body: 'You read it fairly and didn’t spot a problem worth digging into. Nothing clearly wrong with how it’s argued.',
       muted: 'This doesn’t crown a winner; it just means no obvious hole turned up. If something still nags at you, pick the kind of problem it might be and check.',
@@ -483,7 +532,7 @@ function renderValid(mode) {
   };
   const c = COPY[mode] || COPY.checked;
   mount(el('section', { className: 'card verdict-valid' },
-    el('p', { className: 'kicker', textContent: 'The verdict' }),
+    el('p', { className: 'kicker', textContent: c.kicker || 'The verdict' }),
     el('h1', { className: 'verdict-title', textContent: c.title }),
     el('p', { textContent: c.body }),
     el('p', { className: 'muted', textContent: c.muted }),
