@@ -312,9 +312,11 @@ function renderChecklist(familyId) {
   // which. Fix: say plainly this is a list of things a FAIR argument does, and that a "no" is where a
   // weak spot hides. The buttons below are then self-explaining.
   card.append(el('h1', { textContent: 'Here’s what a fair argument would do. Does this one?' }));
+  // The re-test found a 👎 felt like "being the cynic the app warned me about." So bless an honest 👎
+  // as the careful, fair move, not cynicism. A weak spot you actually see is a finding, not a grudge.
   card.append(el('p', { className: 'muted',
-    textContent: 'Tap 👍 if it does that, 👎 if it falls short there. A 👎 is where a weak spot might be. ' +
-      'Answer the ones you can; many won’t apply, and that’s fine.' }));
+    textContent: 'Tap 👍 if it does that, 👎 if it falls short there. Marking an honest 👎 isn’t being harsh; ' +
+      'it’s just noticing. That’s where a weak spot would be. Answer the ones you can; many won’t apply, and that’s fine.' }));
 
   // Build one question row. Each choice carries its own always-visible label (under the icon), so
   // the meaning of 👍/👎 never hides on hover — the re-audit found the hover legend invisible on
@@ -460,20 +462,23 @@ function renderInconclusive(result) {
 function renderValid(mode) {
   clear();
   const COPY = {
+    // The re-test found "it holds up" gets misread as "the other person is RIGHT and you lose." So
+    // every valid verdict now draws the line explicitly: this checks for a weak spot in HOW the point
+    // is argued, it does not rule on who is correct. You can still disagree with a cleanly-argued point.
     earned: {
-      title: 'It makes sense, and you confirmed why.',
-      body: 'You marked the things a good argument does, and they checked out. This isn’t just “nothing wrong found.” You actually confirmed the reasoning does its job.',
-      muted: 'That’s the best kind of pass: not “I couldn’t find a problem,” but “it does the right things.”',
+      title: 'No weak spot here. It’s argued fairly.',
+      body: 'You marked the things a fair argument does, and they checked out. This isn’t just “nothing wrong found.” The way it’s argued does its job.',
+      muted: 'This isn’t a ruling that the other person is right. It only means the reasoning has no obvious hole. You can still disagree; the fair way is to answer the actual point.',
     },
     checked: {
-      title: 'It makes sense.',
-      body: 'You looked closely at this kind of problem, and we gave it a fair chance. It held up. Nothing clearly wrong here.',
-      muted: 'A real result. Most arguments are fine. Disagreeing is okay; just answer the actual point.',
+      title: 'No clear weak spot in how it’s argued.',
+      body: 'You looked closely at this kind of problem and gave it a fair chance. The reasoning held up. Nothing clearly wrong with how the point is made.',
+      muted: 'That’s about HOW it’s argued, not about who’s right. You can still think they’re wrong; just take on the actual point rather than a weak spot.',
     },
     skimmed: {
-      title: 'Nothing jumped out. It seems fine.',
-      body: 'You read it fairly and didn’t spot a problem worth digging into. Nothing clearly wrong; it makes sense well enough.',
-      muted: 'If something still nags at you, pick the kind of problem it might be and check. But “it’s fine” is an honest answer too.',
+      title: 'Nothing jumped out. The reasoning seems fine.',
+      body: 'You read it fairly and didn’t spot a problem worth digging into. Nothing clearly wrong with how it’s argued.',
+      muted: 'This doesn’t crown a winner; it just means no obvious hole turned up. If something still nags at you, pick the kind of problem it might be and check.',
     },
   };
   const c = COPY[mode] || COPY.checked;

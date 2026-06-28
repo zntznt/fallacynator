@@ -82,3 +82,51 @@ unglossed Latin; heavy shrugging led to "Not enough to be sure," which read as t
 - A headless render check drives the real `src/ui.js` through input to pick to checklist and asserts
   the new copy, the folded families' reachability, and the new thumb labels.
 - All four suites (engine, checklist, coverage, calibration) green.
+
+## Re-test (second panel) and the middle-of-flow fixes
+
+The same 8 personas walked the REVISED app; each transcript was adversarially audited for realism in
+BOTH directions (the auditor was told to distrust success that looked too clean). All 8 passed.
+Grades on the three root causes:
+
+- **A (could not enter a real argument): mostly cleared.** All 8 entered a real third-party claim;
+  nobody re-read "argument" as a fight. The "another person said" wording plus the static labeled
+  example block are the load-bearing fix. Honest ceiling: the own-grievance instinct is caught, not
+  extinguished (a couple started typing their own complaint and were stopped by glancing at the
+  example).
+- **C (thumb polarity): mostly cleared.** The side-anchored word labels killed the literal "which
+  thumb" confusion for all 8. The deeper inverted model (the flaw is a 👎 on a positive question)
+  survives, and the rescuing legend is grey so it bounces off pure skim-readers.
+- **B (options read as synonyms): partially cleared.** The "Like:" examples de-synonymize most
+  buckets for most users, but a real multi-flaw grievance still fits 2-3 buckets and the flow forces
+  one. Deliberately left as a separate project (single-bucket pick is a design decision with a
+  precision tradeoff).
+
+The re-test surfaced new and residual problems in the MIDDLE of the flow. Three were fixed:
+
+1. **Bucket-to-checklist mismatch (a real bug the relabel exposed).** A user picked the "who said it
+   or how many agree" family for a CROWD argument and got a checklist leading with old/new/tradition
+   questions, because the crowd fallacy (Bandwagon) and the authority fallacy were not in that
+   family at all. Root cause: the appeals bucket was mis-organized. `irrelevant_appeal` was a
+   junk-drawer (Authority, Emotion, Nature, Bandwagon + force/flattery/wealth/common-sense) and the
+   "standing" family was really tradition/novelty/snob. Fix: reorganized the appeals bucket into
+   three honest, balanced (5/5/5) families by what the argument leans on:
+   - `appeal_to_standing` ("Points to who said it or how many agree"): authority, bandwagon, snob,
+     tradition, novelty. Now an authority OR a crowd argument lands here and the checklist leads with
+     matching questions.
+   - `emotional_appeal` ("Pulls on your emotions"): emotion (reunited with) fear, pity, ridicule,
+     spite.
+   - `irrelevant_appeal` ("Leans on pressure, money, or flattery"): force, wealth, flattery, common
+     sense, nature.
+   Cues were re-homed to follow the moved fallacies, so routing still works. validateBank clean,
+   distinctness 73/73, all suites green.
+2. **The anti-cynic copy backfired on a correct user.** Pressing two honest 👎 felt like "being the
+   cynic the app warned me about." The checklist intro now blesses an honest 👎 as careful noticing,
+   not harshness.
+3. **The valid verdict read as siding against the user** ("it holds up" heard as "they're right, you
+   lose"). All three valid verdicts now state explicitly that the app checks for a weak spot in HOW
+   the point is argued and does not rule on who is correct.
+
+Left for later (deliberately, not failures of these fixes): the screen-2 "What feels wrong" role
+reversal, Latin fallacy names cold on the result screen, the forced single-bucket pick for multi-flaw
+arguments, and same-family checklist rows reading as reworded twins.

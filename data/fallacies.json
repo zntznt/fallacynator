@@ -41,7 +41,7 @@
       "id": "appeal_to_authority",
       "name": "Appeal to Authority",
       "base_rate": 1.1,
-      "family": "irrelevant_appeal",
+      "family": "appeal_to_standing",
       "short": "Treating a claim as true mainly because a famous or respected person said so, not because of the evidence.",
       "teaching": "An appeal to authority leans on who said something instead of the reasons behind it, and it is weakest when the source's expertise does not actually fit the topic. Pointing to a genuine, relevant expert as supporting evidence is fine; the trouble starts only when their say-so stands in for the actual reasoning.",
       "confirm_check": "Is the claim being treated as true mainly because of WHO endorsed it, rather than the evidence or reasoning offered for it?"
@@ -68,7 +68,7 @@
       "id": "appeal_to_emotion",
       "name": "Appeal to Emotion",
       "base_rate": 1.2,
-      "family": "irrelevant_appeal",
+      "family": "emotional_appeal",
       "short": "Using a strong feeling (fear, pity, anger) in place of reasons to support the conclusion.",
       "teaching": "An appeal to emotion leans on how something makes you feel, whether afraid, sympathetic, or outraged, rather than on whether the conclusion is actually true. Feelings can be a fair part of a case; this only goes wrong when the feeling is offered as the reason itself, standing in for evidence that the claim holds.",
       "confirm_check": "Take away the emotional pull (the fear, pity, or anger): is there still a reason left that supports the conclusion, or was the feeling doing the work in place of evidence?"
@@ -104,7 +104,7 @@
       "id": "bandwagon",
       "name": "Bandwagon",
       "base_rate": 1.3,
-      "family": "irrelevant_appeal",
+      "family": "appeal_to_standing",
       "short": "Treating \"lots of people believe or do it\" as the reason a claim is true or right.",
       "teaching": "A bandwagon appeal points to how many people accept or do something as if that alone settles whether it's true or right. Popularity can occasionally be a faint clue, but it becomes a fallacy when a head-count stands in for actual reasons or evidence.",
       "confirm_check": "Is the popularity itself (how many believe or do it) being offered as the reason the claim is true or right, rather than as one clue alongside independent reasons?"

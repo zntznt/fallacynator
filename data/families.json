@@ -24,18 +24,11 @@
     {
       "id": "irrelevant_appeal",
       "name": "Leans on pressure, money, or flattery",
-      "prompt": "Does it push with a threat, a price tag, a compliment, or “just common sense,” instead of a reason?",
+      "prompt": "Does it push with a threat, a price tag, a compliment, or “it’s just common sense,” instead of a reason? Like: “you’re too smart to fall for this, so trust me.”",
       "cues": [
         "all natural",
         "all-natural",
         "so it is healthy",
-        "famous actor",
-        "endorses it",
-        "everyone is buying",
-        "so it must be good",
-        "think of the",
-        "suffering children",
-        "you must donate",
         "you will regret",
         "do not comply",
         "or you'll regret",
@@ -109,7 +102,7 @@
     {
       "id": "emotional_appeal",
       "name": "Pulls on your emotions",
-      "prompt": "Does it work on fear, pity, or anger instead of giving you a reason?",
+      "prompt": "Does it work on fear, pity, anger, or spite instead of giving you a reason? Like: “think of the children, so you have to agree.”",
       "bucket": "appeals",
       "cues": [
         "imagine how",
@@ -118,13 +111,16 @@
         "terrifying",
         "devastating",
         "you should be ashamed",
-        "scary"
+        "scary",
+        "think of the",
+        "suffering children",
+        "you must donate"
       ]
     },
     {
       "id": "appeal_to_standing",
       "name": "Points to who said it or how many agree",
-      "prompt": "Does it rest on a big name or a crowd, rather than on the actual evidence?",
+      "prompt": "Does it lean on a big name, a crowd, or what’s popular, instead of the actual evidence? Like: “everyone’s switching to this, so it must be right.”",
       "bucket": "appeals",
       "cues": [
         "because we always have",
@@ -138,7 +134,11 @@
         "have always",
         "always done it",
         "always celebrated",
-        "the way it has always"
+        "the way it has always",
+        "famous actor",
+        "endorses it",
+        "everyone is buying",
+        "so it must be good"
       ]
     },
     {
