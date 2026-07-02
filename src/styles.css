@@ -240,6 +240,12 @@ h1.verdict-title { font-size: 1.55rem; }   /* the payoff line is the screen's h1
   padding: 1rem 1.15rem;
   margin: 1.25rem 0;
 }
+/* the verdict's premises: the user's own ticks echoed back as the case it was built from */
+.premises { margin: 1rem 0 .25rem; }
+.premises-lead { color: var(--ink-soft); font-size: .92rem; margin: 0 0 .35rem; }
+.premise { margin: .25rem 0; padding-left: .85rem; border-left: 3px solid var(--accent-soft); }
+.premise-q { font-style: italic; }
+.premise-a { color: var(--ink-soft); font-size: .92rem; }
 .teaching .name { font-weight: 600; }
 .teaching .aside { color: var(--ink-soft); font-size: .92rem; }
 .check { font-style: italic; color: var(--ink); margin: 1rem 0 .25rem; }

@@ -437,7 +437,7 @@ function renderMoveConfirm(familyId, fid) {
     // Rather than return a misleading "holds up", nudge them back to the other moves. They can still
     // force the result from there if they disagree.
     if (denied.length === 0) return renderMoveMiss(familyId, fid);
-    renderVerdict(scoreChecklist(DATA, { familyId, affirmed, denied }), familyId);
+    renderVerdict(scoreChecklist(DATA, { familyId, affirmed, denied }), familyId, { affirmed, denied });
   };
   card.append(el('div', { className: 'row between' },
     el('button', { className: 'btn', textContent: '← Other moves', 'aria-label': 'Other moves', onclick: () => renderMovePick(familyId) }),
@@ -586,7 +586,7 @@ function renderChecklist(familyId) {
     // 'na' (doesn’t apply) and skip are both neutral — only 👍/👎 feed the engine.
     const affirmed = Object.keys(choice).filter((q) => choice[q] === 'has');
     const denied = Object.keys(choice).filter((q) => choice[q] === 'lacks');
-    renderVerdict(scoreChecklist(DATA, { familyId, affirmed, denied }), familyId);
+    renderVerdict(scoreChecklist(DATA, { familyId, affirmed, denied }), familyId, { affirmed, denied });
   };
   card.append(el('div', { className: 'row between' },
     el('button', { className: 'btn', textContent: '← Pick a different focus', 'aria-label': 'Pick a different focus', onclick: renderFamilyPick }),
@@ -596,26 +596,69 @@ function renderChecklist(familyId) {
 }
 
 // ---------- 4. verdicts (tentative + teaching) ----------
-function renderVerdict(result, familyId) {
+// `marked` carries the user's own ticks ({affirmed, denied} qid lists) so a verdict can cite them
+// as its premises. The re-contracting fix for "I thought IT would tell ME": the user supplies the
+// observations, the app visibly performs the one step they can't do alone: composing those
+// observations into a named pattern from the catalog. Without it the verdict reads as the app
+// making a call out of thin air and then handing the judging back.
+function renderVerdict(result, familyId, marked = {}) {
   clear();
   steelyStage(result.kind);   // mascot maps accuse/lean → gap, valid → holds, cynic → skeptic
   switch (result.kind) {
-    case 'accuse': return renderAccuse(result);
-    case 'inconclusive_lean': return renderInconclusive(result);
-    case 'valid_earned': return renderValid('earned');
+    case 'accuse': return renderAccuse(result, marked);
+    case 'inconclusive_lean': return renderInconclusive(result, marked);
+    case 'valid_earned': return renderValid('earned', marked);
     case 'cynic_valid':
     default: return renderValid(familyId ? 'checked' : 'skimmed');
   }
 }
 
-function renderAccuse(result) {
+// The text of a tell by qid, from any fallacy that owns it (first match). Used to echo the user's
+// own ticks back on the verdict screen. A shared qid can carry different texts across fallacies;
+// for an accusation we always cite the ACCUSED fallacy's own wording (see renderAccuse), this
+// catch-all is only for the lean/earned screens where any owner's wording says the same thing.
+function anyTellText(qid) {
+  for (const ts of Object.values(DATA.tells)) {
+    const t = ts.find((x) => x.qid === qid);
+    if (t) return t.text;
+  }
+  return null;
+}
+
+// "Built from your answers" block: each cited tell echoed with the user's own call attached.
+// verb: what their tick meant ('no' for a denied virtue, 'yes' for an affirmed one).
+function premiseBlock(lead, texts, verb) {
+  const block = el('div', { className: 'premises' },
+    el('p', { className: 'premises-lead', textContent: lead }));
+  for (const t of texts) {
+    block.append(el('p', { className: 'premise' },
+      el('span', { className: 'premise-q', textContent: `“${t}”` }),
+      el('span', { className: 'premise-a', textContent: ` Your call: ${verb}.` })));
+  }
+  return block;
+}
+
+function renderAccuse(result, marked = {}) {
   const f = DATA.fallacies[result.fallacy];
+  // The premises of this accusation are the accused fallacy's OWN tells the user marked absent.
+  // (Denials of sibling tells never feed this fallacy's score, per-fallacy isolation, so citing
+  // them here would misstate how the verdict was reached.)
+  const deniedSet = new Set(marked.denied || []);
+  const cited = (DATA.tells[result.fallacy] || []).filter((t) => deniedSet.has(t.qid));
   const yes = el('button', { className: 'btn btn-primary', textContent: 'Yes, that fits' });
   const no = el('button', { className: 'btn', textContent: 'No, that’s not it' });
   const card = el('section', { className: 'card verdict-accuse' },
     el('p', { className: 'kicker', textContent: 'One thing to check' }),
     el('h1', { className: 'verdict-title', textContent: `There may be a weak spot here. It looks like ${f.name}.` }),
-    el('p', { className: 'muted', textContent: 'That’s just what we noticed. You’re the judge. Here’s what it means:' }),
+  );
+  if (cited.length) {
+    card.append(premiseBlock('This comes from your own answers, put together:', cited.map((t) => t.text), 'no'));
+    card.append(el('p', { className: 'muted', textContent:
+      'Each of those is an honest observation. Together, they form a pattern with a name. You’re the judge of whether it fits:' }));
+  } else {
+    card.append(el('p', { className: 'muted', textContent: 'That’s just what we noticed. You’re the judge. Here’s what it means:' }));
+  }
+  card.append(
     el('div', { className: 'teaching' },
       el('span', { className: 'name', textContent: f.name + '. ' }),
       // Teach the word "fallacy" exactly once, attached to a concrete example the user is looking
@@ -645,25 +688,34 @@ function renderConfirmed(f) {
   ));
 }
 
-function renderInconclusive(result) {
+function renderInconclusive(result, marked = {}) {
   clear();
   const f = result.leanFallacy ? DATA.fallacies[result.leanFallacy] : null;
   const lean = f
     ? `There might be something here, maybe ${article(f.name)} ${f.name}, but not enough to be sure.`
     : 'There might be something here, but not enough to be sure.';
-  mount(el('section', { className: 'card verdict-cynic' },
+  const card = el('section', { className: 'card verdict-cynic' },
     el('p', { className: 'kicker', textContent: 'The result' }),
     el('h1', { className: 'verdict-title', textContent: 'Not enough to be sure, and that’s fine.' }),
+  );
+  // Echo what they actually flagged, so "not sure" reads as an honest weighing of THEIR findings,
+  // not the app shrugging them off (re-audit: the old ending "read as the app giving up").
+  const flagged = (marked.denied || []).map(anyTellText).filter(Boolean).slice(0, 3);
+  if (flagged.length) {
+    card.append(premiseBlock('You did spot something. You marked:', flagged, 'no'));
+  }
+  card.append(
     el('p', { textContent: lean + ' We’d rather say “not sure” than pin a label on an argument that might be fine.' }),
     el('p', { className: 'muted', textContent: 'Trust your own read. If it still feels wrong, the fair move is to ask the other person to explain their reasoning.' }),
     restartRow(),
-  ));
+  );
+  mount(card);
 }
 
 // mode: 'earned' (user affirmed ≥2 virtues → positively justified),
 //       'checked' (inspected a family, nothing failed enough → not defeated),
 //       'skimmed' ("none of these / seems fine" → not inspected, just stands)
-function renderValid(mode) {
+function renderValid(mode, marked = {}) {
   clear();
   const COPY = {
     // The re-test found "it holds up" gets misread as "the other person is RIGHT and you lose," and
@@ -690,13 +742,27 @@ function renderValid(mode) {
     },
   };
   const c = COPY[mode] || COPY.checked;
-  mount(el('section', { className: 'card verdict-valid' },
+  const card = el('section', { className: 'card verdict-valid' },
     el('p', { className: 'kicker', textContent: c.kicker || 'The verdict' }),
     el('h1', { className: 'verdict-title', textContent: c.title }),
     el('p', { textContent: c.body }),
+  );
+  // Earned means the user vouched for specific virtues; show them their own case, not just our
+  // summary of it. (Same re-contracting as the accusation screen, pointed the other way.)
+  if (mode === 'earned') {
+    const vouched = (marked.affirmed || []).map(anyTellText).filter(Boolean).slice(0, 3);
+    const more = (marked.affirmed || []).length - vouched.length;
+    if (vouched.length) {
+      card.append(premiseBlock(
+        more > 0 ? `The case you built for it (and ${more} more):` : 'The case you built for it:',
+        vouched, 'yes'));
+    }
+  }
+  card.append(
     el('p', { className: 'muted', textContent: c.muted }),
     restartRow(),
-  ));
+  );
+  mount(card);
 }
 
 function renderCynic(why, rejectedFallacy) {
